@@ -1,0 +1,83 @@
+esphome:
+  name: pir1
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Pir1 Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 25
+      mode: INPUT
+    id: pir1
+    internal: true
+    device_class: motion
+    on_press:
+      then:
+        - output.set_level:
+            id: pwm_output
+            level: 60%
+    on_release:
+      then:
+        - output.set_level:
+            id: pwm_output
+            level: 6%
+  - platform: template
+    name: Movimiento
+    id: movimiento
+    device_class: motion
+    lambda: |-
+      return id(pir1).state;
+    filters:
+      - delayed_off: 20s
+    on_release:
+      then:
+        - output.set_level:
+            id: pwm_output
+            level: 0%
+sensor:
+  # Wifi signal sensor
+  - platform: wifi_signal
+    name: "Señal WiFi (PIR)"
+    update_interval: 60s
+
+text_sensor:
+  - platform: wifi_info
+#    ip_address:
+#      name: PIR IP Address
+#    ssid:
+#      name: PIR Connected SSID
+    bssid:
+      name: PIR Connected BSSID
+#    mac_address:
+#      name: PIR Mac Wifi Address
+  - platform: version
+    name: "ESPHome Version"
+
+
+output:
+  - platform: ledc
+    pin: 27
+    frequency: 2000Hz
+    id: pwm_output
+
+

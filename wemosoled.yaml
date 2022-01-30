@@ -1,0 +1,256 @@
+esphome:
+  name: wemosoled
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Wemosoled Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+time:
+  - platform: homeassistant
+    id: esptime
+    on_time:
+      # Decrease local countdown in case we get disconnected
+      - seconds: '/10'
+        minutes: '*'
+        then:
+          - sensor.template.publish:
+              id: local_countdown
+              state: !lambda 'return id(local_countdown).state - 10;'
+      # Periodically call script to adjust brightness and automatically switch off
+      - seconds: 15,45
+        minutes: '*'
+        then:
+          - script.execute: auto_down_off
+
+font:
+  - file: 'fonts/Purisa.ttf'
+    id: font1
+    size: 22
+
+i2c:
+  sda: 5
+  scl: 4
+  scan: False
+
+text_sensor:
+  - platform: homeassistant
+    entity_id: input_text.prueba
+    name: "Texto"
+    id: texto
+    internal: true
+  - platform: version
+    name: "ESPHome Version"
+
+
+binary_sensor:
+  # Is the light currently on?
+  - platform: template
+    id: led_light_sensor
+    lambda: |-
+      return id(led_light).current_values.is_on();
+    on_release:
+      switch.turn_off: despertar
+  # Button on GPIO0, in parallel with board button. Needs to be open on boot.
+  - platform: gpio
+    id: button
+    pin:
+      number: 0
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      then:
+        - light.toggle: led_light
+
+sensor:
+  # Remote alarm countdown
+  - platform: homeassistant
+    name: "Alarm Countdown from HA"
+    entity_id: sensor.aquaris_u_lite_next_alarm_countdown
+    internal: true
+    accuracy_decimals: 0
+    id: ha_countdown
+    on_value:
+      then:
+        # Updates local countdown when getting updates
+        - sensor.template.publish:
+            id: local_countdown
+            state: !lambda 'return id(ha_countdown).state;'
+  # Local alarm countdown
+  - platform: template
+    name: "Local Alarm Countdown"
+    id: local_countdown
+    internal: true
+    unit_of_measurement: 's'
+    accuracy_decimals: 0
+    on_value_range:
+      below: 120
+      then:
+        - switch.turn_on: despertar
+  # Temperature and humidity sensor
+  - platform: dht
+    pin: 15
+    model: DHT11
+    temperature:
+      name: "Temperatura"
+      id: temperatura
+    humidity:
+      name: "Humedad"
+      id: humedad
+    update_interval: 60s
+  # Wifi signal sensor
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 60s
+  # Rotary encoder on pins 14 and 2. Pin 2 needs to be LOW or OPEN on boot.
+  - platform: rotary_encoder
+    id: encoder
+    name: "Rotary Encoder"
+    internal: true
+    pin_a:
+      number: 2
+      mode: INPUT_PULLUP
+    pin_b:
+      number: 14
+      mode: INPUT_PULLUP
+    on_value:
+      - if:
+          condition:
+            lambda: |-
+                      return x>0;
+          then:
+            - light.turn_on:
+                id: led_light
+            - light.dim_relative:
+                id: led_light
+                relative_brightness: !lambda 'return x / 25.0;'
+      - if:
+          condition:
+            lambda: |-
+                     return x<0 && id(led_light).remote_values.is_on();
+          then:
+            - light.dim_relative:
+                id: led_light
+                relative_brightness: !lambda 'return x / 25.0;'
+      - sensor.rotary_encoder.set_value:
+          id: encoder
+          value: 0
+      - if:
+          condition:
+            lambda: |-
+              return id(led_light).remote_values.get_brightness() < 0.11;
+          then:
+            - light.turn_off:
+                id: led_light
+
+# Still free: GPIO12, GPIO16.
+
+output:
+  # LED output on GPIO13. Uses N-mosfet, so no inversion needed.
+  - platform: ledc
+    frequency: 1220Hz
+    id: led_output
+    pin: 13
+
+light:
+  - platform: monochromatic
+    name: "Lamp"
+    output: led_output
+    id: led_light
+    default_transition_length: 2s
+
+switch:
+  - platform: template
+    name: Despertar
+    id: despertar
+    optimistic: true
+    on_turn_on:
+      - light.control:
+          id: led_light
+          brightness: 15%
+          state: on
+          transition_length: 1s
+
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    reset_pin: GPIO13
+    address: 0x3C
+    update_interval: 0.5s
+    rotation: 180
+    lambda: |-
+      it.printf(64, 0, id(font1), TextAlign::TOP_CENTER, "%s", id(texto).state.c_str());
+      it.strftime(64, 16, id(font1), TextAlign::TOP_CENTER, "%H:%M", id(esptime).now());
+      it.printf(64, 32, id(font1), TextAlign::TOP_CENTER, "%2.1fC %2.0f%%", id(temperatura).state, id(humedad).state);
+      if(id(led_light).current_values.is_on()) {
+        it.filled_rectangle(0, 62, 128*id(led_light).current_values.get_brightness(), 2);
+      }
+      if(id(led_light).remote_values.is_on()) {
+        it.filled_rectangle(0, 0 /*60*/, 128*id(led_light).remote_values.get_brightness(), 2);
+      }
+
+script:
+  - id: auto_down_off
+    then:
+      - if:
+          condition:
+            - light.is_on: led_light
+            - switch.is_off: despertar
+          then:
+            - logger.log: "auto_down_off light.is_on despertar off"
+            - if:
+                condition:
+                   lambda: |-
+                     return id(led_light).remote_values.get_brightness() > 0.11;
+                then:
+                   - logger.log: "decreasing brightness"
+                   - light.control:
+                         id: led_light
+                         brightness: !lambda |-
+                           return id(led_light).remote_values.get_brightness() - 0.01;
+                         transition_length: 1s
+            - if:
+                condition:
+                   lambda: |-
+                     return id(led_light).remote_values.get_brightness() <= 0.11;
+                then:
+                   - logger.log:
+                       format: "Off - %.1f"
+                       args: ['id(led_light).remote_values.get_brightness()']
+                   - light.turn_off: led_light
+      - if:
+          condition:
+             - switch.is_on: despertar
+          then:
+             - logger.log: "auto_down_off despertar"
+             - if:
+                condition:
+                    lambda: |-
+                      return id(led_light).remote_values.get_brightness() < 0.95;
+                then:
+                  - logger.log: "increasing brightness"
+                  - light.control:
+                      id: led_light
+                      brightness: !lambda |-
+                         return id(led_light).remote_values.get_brightness() + 0.05;
+                      transition_length: 1s
+                else:
+                  - logger.log: "despertar end"
+                  - switch.turn_off: despertar

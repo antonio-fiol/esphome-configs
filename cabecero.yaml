@@ -1,0 +1,307 @@
+esphome:
+  name: cabecero
+  on_boot:
+    - lambda: |-
+        for(auto light : { id(central), id(izquierda), id(derecha) }) {
+          auto call = light->make_call();
+          call.set_brightness(0.3);
+          call.set_state(false);
+          call.perform();
+        }
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Cabecero Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+output:
+  - platform: ledc
+    pin: GPIO15
+    id: out1
+    frequency: 1220Hz
+  - platform: ledc
+    pin: GPIO16
+    id: out2
+    frequency: 1220Hz
+  - platform: ledc
+    pin: GPIO22
+    id: out3
+    frequency: 1220Hz
+  - platform: ledc
+    pin: GPIO23
+    id: out4
+    frequency: 1220Hz
+light:
+  - platform: monochromatic
+    output: out2
+    name: Central
+    id: central
+    default_transition_length: 0.25s
+    on_turn_on: &runscript
+      - script.execute: check_en
+    on_turn_off: *runscript
+    restore_mode: ALWAYS_OFF
+  - platform: monochromatic
+    output: out3
+    name: Izquierda
+    id: izquierda
+    default_transition_length: 0.25s
+    on_turn_on: *runscript
+    on_turn_off: *runscript
+    restore_mode: ALWAYS_OFF
+  - platform: monochromatic
+    output: out1
+    name: Derecha
+    id: derecha
+    default_transition_length: 0.25s
+    on_turn_on: *runscript
+    on_turn_off: *runscript
+    restore_mode: ALWAYS_OFF
+    
+script:
+  - id: check_en
+    then:
+      - logger.log: check_en
+      - lambda: |-
+          id(enable_out).publish_state(
+              id(izquierda).remote_values.is_on() || 
+              id(central  ).remote_values.is_on() || 
+              id(derecha  ).remote_values.is_on()
+          ); 
+switch:
+  - platform: gpio
+    pin: GPIO17
+    name: Activar Salidas
+    id: enable_out
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+sensor:
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 60s
+
+  - platform: rotary_encoder
+    id: encoder1
+    name: "Encoder 1"
+    internal: true
+    restore_mode: ALWAYS_ZERO
+    pin_b:
+      number: 4
+      mode: INPUT_PULLUP
+    pin_a:
+      number: 13
+      mode: INPUT_PULLUP
+    on_value:
+      - lambda: |-
+          auto light = id(central);
+          auto call = light->make_call();
+          float tmpb = (light->remote_values.is_on()?light->remote_values.get_brightness():0)+x/25.0;
+          float bri = tmpb<0.0?0.0:(tmpb>1.0?1.0:tmpb);
+          if(bri>0.0) {
+            call.set_brightness(bri);
+            call.set_state(true);
+          } else {
+            call.set_brightness(0.3);
+            call.set_state(false);
+          }
+          call.perform();
+      - sensor.rotary_encoder.set_value:
+          id: encoder1
+          value: 0
+  - platform: rotary_encoder
+    id: encoder2
+    name: "Encoder 2"
+    internal: true
+    restore_mode: ALWAYS_ZERO
+    pin_b:
+      number: 12
+      mode: INPUT_PULLUP
+    pin_a:
+      number: 21
+      mode: INPUT_PULLUP
+    on_value:
+      - lambda: |-
+          auto light = id(izquierda);
+          auto call = light->make_call();
+          float tmpb = (light->remote_values.is_on()?light->remote_values.get_brightness():0)+x/25.0;
+          float bri = tmpb<0.0?0.0:(tmpb>1.0?1.0:tmpb);
+          if(bri>0.0) {
+            call.set_brightness(bri);
+            call.set_state(true);
+          } else {
+            call.set_brightness(0.3);
+            call.set_state(false);
+          }
+          call.perform();
+      - sensor.rotary_encoder.set_value:
+          id: encoder2
+          value: 0
+  - platform: rotary_encoder
+    id: encoder3
+    name: "Encoder 3"
+    internal: true
+    restore_mode: ALWAYS_ZERO
+    pin_b:
+      number: 32
+      mode: INPUT_PULLUP
+    pin_a:
+      number: 14
+      mode: INPUT_PULLUP
+    on_value:
+      - lambda: |-
+          auto light = id(central);
+          auto call = light->make_call();
+          float tmpb = (light->remote_values.is_on()?light->remote_values.get_brightness():0)+x/25.0;
+          float bri = tmpb<0.0?0.0:(tmpb>1.0?1.0:tmpb);
+          if(bri>0.0) {
+            call.set_brightness(bri);
+            call.set_state(true);
+          } else {
+            call.set_brightness(0.3);
+            call.set_state(false);
+          }
+          call.perform();
+      - sensor.rotary_encoder.set_value:
+          id: encoder3
+          value: 0
+  - platform: rotary_encoder
+    id: encoder4
+    name: "Encoder 4"
+    internal: true
+    restore_mode: ALWAYS_ZERO
+    pin_b:
+      number: 27
+      mode: INPUT_PULLUP
+    pin_a:
+      number: 26
+      mode: INPUT_PULLUP
+    on_value:
+      - lambda: |-
+          auto light = id(derecha);
+          auto call = light->make_call();
+          float tmpb = (light->remote_values.is_on()?light->remote_values.get_brightness():0)+x/25.0;
+          float bri = tmpb<0.0?0.0:(tmpb>1.0?1.0:tmpb);
+          if(bri>0.0) {
+            call.set_brightness(bri);
+            call.set_state(true);
+          } else {
+            call.set_brightness(0.3);
+            call.set_state(false);
+          }
+          call.perform();
+      - sensor.rotary_encoder.set_value:
+          id: encoder4
+          value: 0
+
+binary_sensor:
+  - platform: gpio
+    name: "Boton 1"
+    id: boton1
+    internal: true
+    pin:
+      number: 18
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - lambda: |-
+          auto light = id(central);
+          auto call = light->toggle();
+          call.set_brightness(0.3);
+          call.perform();
+      - if:
+         condition:
+           - binary_sensor.is_on: boton2
+         then:
+           - light.turn_off: central
+           - light.turn_off: izquierda
+           - light.turn_off: derecha
+  - platform: gpio
+    name: "Boton 2"
+    id: boton2
+    internal: true
+    pin:
+      number: 19
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - lambda: |-
+          auto light = id(izquierda);
+          auto call = light->toggle();
+          call.set_brightness(0.3);
+          call.perform();
+      - if:
+         condition:
+           - binary_sensor.is_on: boton1
+         then:
+           - light.turn_off: central
+           - light.turn_off: izquierda
+           - light.turn_off: derecha
+  - platform: gpio
+    name: "Boton 3"
+    id: boton3
+    internal: true
+    pin:
+      number: 33
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - lambda: |-
+          auto light = id(central);
+          auto call = light->toggle();
+          call.set_brightness(0.3);
+          call.perform();
+      - if:
+         condition:
+           - binary_sensor.is_on: boton4
+         then:
+           - light.turn_off: central
+           - light.turn_off: izquierda
+           - light.turn_off: derecha
+  - platform: gpio
+    name: "Boton 4"
+    id: boton4
+    internal: true
+    pin:
+      number: 25
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - lambda: |-
+          auto light = id(derecha);
+          auto call = light->toggle();
+          call.set_brightness(0.3);
+          call.perform();
+      - if:
+         condition:
+           - binary_sensor.is_on: boton3
+         then:
+           - light.turn_off: central
+           - light.turn_off: izquierda
+           - light.turn_off: derecha
+
+text_sensor:
+  - platform: version
+    name: "ESPHome Version"
+

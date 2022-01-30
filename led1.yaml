@@ -1,0 +1,225 @@
+esphome:
+  name: led1
+  platform: ESP8266
+  board: nodemcuv2
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Led1 Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time:
+      - seconds: 0
+        minutes: '*'
+        then:
+          - script.execute: auto_down_off
+      - seconds: 30
+        minutes: '*'
+        hours: 0,1,2,3,4,5,6,7,8,21,22,23
+        then:
+          - script.execute: auto_down_off
+
+
+light:
+  - platform: neopixelbus
+    type: GRBW
+    variant: SK6812
+    num_leds: 300
+    name: "led1"
+    method: ESP8266_ASYNC_UART1
+    pin: GPIO2
+    id: led1
+    #on_turn_off:
+    #  switch.turn_off: despertar
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO4
+    id: boton1
+    on_click:
+      min_length: 50ms
+      max_length: 350ms
+      then:
+        - light.toggle: led1
+        - script.execute: adjust_up
+    on_double_click:
+      then:
+        - light.control:
+            id: led1
+            state: on
+            white: 100%
+            brightness: 0%
+        - delay: 0.1s
+        - light.turn_on: led1
+    on_press:
+      - delay: 350ms
+      - if:
+         condition:
+             - binary_sensor.is_on: boton1
+             - light.is_on: led1
+         then:
+          - while:
+             condition:
+                - binary_sensor.is_on: boton1
+                - light.is_on: led1
+             then:
+               - if:
+                  condition:
+                     - switch.is_on: up
+                  then:
+                     - light.control:
+                          id: led1
+                          white: !lambda |-
+                            return id(led1).remote_values.get_white() + 0.02;
+                          transition_length: 0.1s
+                     - delay: 0.15s
+                     - script.execute: adjust_up
+                  else:
+                    - light.control:
+                          id: led1
+                          white: !lambda |-
+                            return id(led1).remote_values.get_white() - 0.02;
+                          transition_length: 0.1s
+                    - delay: 0.15s
+                    - script.execute: adjust_up
+          - switch.toggle: up
+  - platform: template
+    id: led1sensor
+    lambda: |-
+      return id(led1).current_values.is_on();
+    on_release:
+      switch.turn_off: despertar
+
+switch:
+  - platform: template
+    id: up
+    optimistic: true
+  - platform: template
+    name: Despertar
+    id: despertar
+    optimistic: true
+    on_turn_on:
+      - light.control:
+          id: led1
+          white: 12%
+          red: 100%
+          green: 50%
+          blue: 0%
+          brightness: 12%
+          state: on
+
+script:
+  - id: adjust_up
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(led1).remote_values.get_white() < 0.12;
+          then:
+            - switch.turn_on: up
+            - light.control:
+               id: led1
+               white: 12%
+      - if:
+          condition:
+            lambda: |-
+              return id(led1).remote_values.get_white() > 0.95;
+          then:
+            - switch.turn_off: up
+            - light.control:
+               id: led1
+               white: 95%
+  - id: auto_down_off
+    then:
+      - if:
+          condition:
+             - light.is_on: led1
+             - switch.is_off: despertar
+          then:
+             - logger.log: "auto_down_off light.is_on despertar off" 
+             - if:
+                condition:
+                    lambda: |-
+                      return id(led1).remote_values.get_white() > 0.12;
+                then:
+                    - logger.log: "decreasing white"
+                    - light.control:
+                          id: led1
+                          white: !lambda |-
+                            return id(led1).remote_values.get_white() - 0.01;
+                          transition_length: 10s
+             - if:
+                condition:
+                    lambda: |-
+                      return id(led1).remote_values.get_brightness() > 0.12;
+                then:
+                    - logger.log: "decreasing brightness"
+                    - light.control:
+                          id: led1
+                          brightness: !lambda |-
+                            return id(led1).remote_values.get_brightness() - 0.01;
+                          transition_length: 10s
+             - if:
+                condition:
+                    lambda: |-
+                      return id(led1).remote_values.get_brightness() <= 0.12 && id(led1).remote_values.get_white() <= 0.12;
+                then:
+                    - logger.log: 
+                        format: "Off - %.1f %.1f"
+                        args: [ 'id(led1).remote_values.get_brightness()', 'id(led1).remote_values.get_white()' ]
+                    - light.turn_off: led1
+      - if:
+          condition:
+             - switch.is_on: despertar
+          then:
+             - logger.log: "auto_down_off despertar" 
+             - if:
+                condition:
+                    lambda: |-
+                      return id(led1).remote_values.get_brightness() < 0.95;
+                then:
+                    - logger.log: "increasing brightness"
+                    - light.control:
+                          id: led1
+                          brightness: !lambda |-
+                            return id(led1).remote_values.get_brightness() + 0.05;
+                          transition_length: 10s
+                else:
+                 - if:
+                    condition:
+                     lambda: |-
+                      return id(led1).remote_values.get_white() < 0.95;
+                    then:
+                     - logger.log: "increasing white"
+                     - light.control:
+                          id: led1
+                          white: !lambda |-
+                            return id(led1).remote_values.get_white() + 0.05;
+                          transition_length: 10s
+                    else:
+                     - logger.log: "despertar end"
+                     - switch.turn_off: despertar
+
+
+text_sensor:
+  - platform: version
+    name: "ESPHome Version"
+

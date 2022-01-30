@@ -1,0 +1,81 @@
+esphome:
+  name: m5cam
+  platform: ESP32
+  board: esp32cam
+#  on_boot:
+#   - delay: 50s
+#   - if:
+#        condition:
+#          # Same syntax for is_off
+#          binary_sensor.is_on: ota_binary_sensor
+#        then:
+#          - deep_sleep.prevent: deep_sleep_1
+#          - logger.log: "AFB ON"
+#        else:
+#          - logger.log: "AFB OFF"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "M5Cam Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+esp32_camera:
+  external_clock:
+    pin: GPIO27
+    frequency: 20MHz
+  i2c_pins:
+    sda: GPIO25
+    scl: GPIO23
+  data_pins: [GPIO17, GPIO35, GPIO34, GPIO5, GPIO39, GPIO18, GPIO36, GPIO19]
+  vsync_pin: GPIO22
+  href_pin: GPIO26
+  pixel_clock_pin: GPIO21
+  reset_pin: GPIO15
+
+  # Image settings
+  name: My Camera
+  # ...
+  resolution: 800x600
+  vertical_flip: false
+  horizontal_mirror: false
+
+
+#deep_sleep:
+#  run_duration: 60s
+#  sleep_duration: 10min
+#  id: deep_sleep_1
+
+sensor:
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 10s
+
+binary_sensor:
+  - platform: homeassistant
+    entity_id: input_boolean.ota
+    id: ota_binary_sensor
+    internal: true
+    on_release:
+      then:
+        - logger.log: "AFB ON_RELEASE"
+
+#mqtt:
+#  broker: 192.168.68.120
+#  username: mqtt
+#  password: abcd1234
+#  discovery: True
+

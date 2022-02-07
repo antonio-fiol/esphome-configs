@@ -1,0 +1,72 @@
+esphome:
+  name: riego1
+  platform: ESP8266
+  board: esp01_1m
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/ssieb/custom_components
+    components: [ heapmon ]
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Test Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+  baud_rate: 0 #need this to free up UART pins
+
+uart:
+  baud_rate: 9600
+  tx_pin: GPIO1
+  rx_pin: GPIO3
+
+switch:
+  - platform: template
+    icon: mdi:watering-can
+    name: "Riego"
+    id: riego
+    turn_on_action:
+      - uart.write: [0xA0, 0x01, 0x01, 0xA2]
+    turn_off_action:
+      - uart.write: [0xA0, 0x01, 0x00, 0xA1]
+    optimistic: true
+
+binary_sensor:
+  - platform: template
+    internal: true
+    id: toff
+    lambda: |-
+      return id(riego).state;
+    filters:
+      - delayed_on: 600s
+    on_press:
+      then:
+        switch.turn_off: riego
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+sensor:
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 30s
+  - platform: uptime
+    name: Uptime
+  - platform: heapmon
+    id: heapspace
+    name: Free space
+text_sensor:
+  - platform: version
+    name: "ESPHome Version"
+

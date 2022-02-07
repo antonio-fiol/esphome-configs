@@ -1,0 +1,175 @@
+esphome:
+  name: riego2
+  platform: ESP8266
+  board: esp12e
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Riego2 Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+  baud_rate: 0 #need this to free up UART pins
+
+# Enable Home Assistant API
+api:
+
+# Enable over-the-air flashing
+ota:
+
+# Use the blue LED in the device as a status LED, which will blink if there are warnings (slow) or errors (fast)
+status_led:
+  pin:
+    number: GPIO5
+    inverted: True
+
+# Four relay outputs, exposed as switches in Home Assistant
+switch:
+  - platform: gpio
+    pin: GPIO16
+    name: Jardineras
+    id: relay1
+    icon: mdi:watering-can
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+       - sensor.template.publish:
+           id: remaining_time1
+           state: !lambda 'return id(ui_zone1_duration).state * 60;'
+  - platform: gpio
+    pin: GPIO14
+    name: Césped
+    id: relay2
+    icon: mdi:watering-can
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+       - sensor.template.publish:
+           id: remaining_time2
+           state: !lambda 'return id(ui_zone2_duration).state * 60;'
+  - platform: gpio
+    pin: GPIO12
+    name: Transformador
+    id: relay3
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: GPIO13
+    name: Relé
+    id: relay4
+    restore_mode: ALWAYS_OFF
+
+binary_sensor:
+  - platform: template
+    internal: true
+    id: toff1
+    lambda: |-
+      return id(relay1).state;
+    filters:
+      - delayed_on: 10800s
+    on_press:
+      then:
+        switch.turn_off: relay1
+  - platform: template
+    internal: true
+    id: toff2
+    lambda: |-
+      return id(relay2).state;
+    filters:
+      - delayed_on: 10800s
+    on_press:
+      then:
+        switch.turn_off: relay2
+  - platform: template
+    id: haypresion
+    name: Hay Presión
+    lambda: |-
+      return id(presion).state > 30;
+    filters:
+      - delayed_on: 90s
+  - platform: template
+    internal: true
+    id: regando
+    lambda: |-
+      return ( id(relay1).state || id(relay2).state ) && id(haypresion).state;
+    on_press:
+      then:
+        switch.turn_on: relay3
+    on_release:
+      then:
+        switch.turn_off: relay3
+
+sensor:
+  # OPTIONAL, if you want to monitor the device's wifi signal from Home Assistant
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 60s
+  # OPTIONAL, if you are planning to connect an analog sensor to ADC input.
+  # IMPORTANT: The ADC input only supports signals between 0V-1V.
+  # Do not exceed this range if you don't want to fry your device.
+  - platform: adc
+    pin: A0
+    name: "Presion Agua"
+    id: presion
+    update_interval: 30s
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    filters:
+      - calibrate_polynomial:
+          degree: 2
+          datapoints:
+            - 0.0 -> 0
+            - 0.27 -> 7.29
+            - 1 -> 100.0
+  - platform: homeassistant
+    id: ui_zone1_duration
+    entity_id: input_number.irrigation_zone1_duration
+    unit_of_measurement: min
+  - platform: homeassistant
+    id: ui_zone2_duration
+    entity_id: input_number.irrigation_zone2_duration
+    unit_of_measurement: min
+  - platform: template
+    id: remaining_time1
+    name: Restante Jardineras
+    icon: mdi:timer
+    unit_of_measurement: s
+    accuracy_decimals: 0
+  - platform: template
+    id: remaining_time2
+    name: Restante Césped
+    icon: mdi:timer
+    unit_of_measurement: s
+    accuracy_decimals: 0
+    
+
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          if (id(remaining_time1).state > 0 && id(relay1).state && id(haypresion).state) {
+              // Decrement the timer.
+              if (id(remaining_time1).state <= 5) {
+                id(relay1).turn_off();
+                id(remaining_time1).publish_state(0);
+              } else {
+                id(remaining_time1).publish_state(id(remaining_time1).state - 5);
+              }
+          }
+          if (id(remaining_time2).state > 0 && id(relay2).state && id(haypresion).state) {
+              // Decrement the timer.
+              if (id(remaining_time2).state <= 5) {
+                id(relay2).turn_off();
+                id(remaining_time2).publish_state(0);
+              } else {
+                id(remaining_time2).publish_state(id(remaining_time2).state - 5);
+              }
+          }
+
+text_sensor:
+  - platform: version
+    name: "ESPHome Version"

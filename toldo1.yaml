@@ -1,0 +1,209 @@
+substitutions:
+  devicename: toldo1
+  upper_devicename: Toldo1
+
+esphome:
+  name: $devicename
+  platform: ESP8266
+  board: esp12e
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${upper_devicename} Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+  baud_rate: 0 #need this to free up UART pins
+
+# Enable Home Assistant API
+api:
+
+# Enable over-the-air flashing
+ota:
+
+# Use the blue LED in the device as a status LED, which will blink if there are warnings (slow) or errors (fast)
+status_led:
+  pin:
+    number: GPIO5
+    inverted: True
+
+# Four relay outputs, exposed as switches in Home Assistant
+switch:
+  - platform: gpio
+    pin: GPIO16
+    id: led_abrir
+    internal: true
+  - platform: gpio
+    pin: GPIO14
+    id: led_cerrar
+    internal: true
+  - platform: gpio
+    pin: GPIO12
+    id: abrir
+    internal: true
+    interlock: [cerrar]
+    interlock_wait_time: 1s
+  - platform: gpio
+    pin: GPIO13
+    id: cerrar
+    internal: true
+    interlock: [abrir]
+    interlock_wait_time: 1s
+    
+cover:
+  - platform: time_based
+    name: "${upper_devicename}"
+    id: cover1
+    device_class: awning
+    open_action:
+      - switch.turn_on: abrir
+    open_duration: 28.160s
+    close_action:
+      - switch.turn_on: cerrar
+    close_duration: 29.545s
+    stop_action:
+      - switch.turn_off: abrir
+      - switch.turn_off: cerrar
+    has_built_in_endstop: True
+    
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      inverted: true
+      mode: INPUT_PULLUP
+    id: in_a
+    internal: true
+    on_click:
+      - if:
+          condition:
+            or:
+              - switch.is_on: abrir
+              - switch.is_on: cerrar
+          then:
+            - cover.stop: cover1
+          else:
+            - cover.open: cover1
+  - platform: gpio
+    pin:
+      number: GPIO2
+      inverted: true
+      mode: INPUT_PULLUP
+    id: in_b
+    internal: true
+    on_click:
+      - if:
+          condition:
+            or:
+              - switch.is_on: abrir
+              - switch.is_on: cerrar
+          then:
+            - cover.stop: cover1
+          else:
+            - cover.close: cover1
+  - platform: template
+    id: status_blinker
+    internal: true
+    lambda: |-
+      auto s = App.get_app_state();
+      if((s & STATUS_LED_ERROR) != 0u) return millis() % 250u < 150u;
+      if((s & STATUS_LED_WARNING) != 0u) return millis() % 1500u < 250u;
+      return false;
+  - platform: template
+    id: out_abrir_sensor
+    internal: true
+    lambda: |-
+      return id(status_blinker).state || id(abrir).state;
+    on_press:
+      - switch.turn_on: led_abrir
+    on_release:
+      - switch.turn_off: led_abrir
+  - platform: template
+    id: out_cerrar_sensor
+    internal: true
+    lambda: |-
+      return id(status_blinker).state || id(cerrar).state;
+    on_press:
+      - switch.turn_on: led_cerrar
+    on_release:
+      - switch.turn_off: led_cerrar
+  - platform: template
+    id: timeout
+    internal: true
+    lambda: |-
+      return ( id(abrir).state || id(cerrar).state ) && ( id(cover1).is_fully_closed() || id(cover1).is_fully_open() );
+    on_press:
+      - cover.stop: cover1
+    filters:
+      - delayed_on: 30s
+
+sensor:
+  # OPTIONAL, if you want to monitor the device's wifi signal from Home Assistant
+  - platform: wifi_signal
+    name: "Señal WiFi ${upper_devicename}"
+    update_interval: 60s
+  # OPTIONAL, if you are planning to connect an analog sensor to ADC input.
+  # IMPORTANT: The ADC input only supports signals between 0V-1V.
+  # Do not exceed this range if you don't want to fry your device.
+  - platform: adc
+    id: analog0
+    pin: A0
+    name: "Analog input ${devicename}"
+    update_interval: 10s
+    internal: true
+  - platform: pulse_counter
+    pin:
+      number: GPIO4
+      inverted: true
+      mode: INPUT_PULLUP
+    id: wind_speed_raw
+    internal: true
+    update_interval: 3s
+    unit_of_measurement: km/h
+    filters:
+      - multiply: 25  # pulso --> cm
+      - multiply: 0.0006 # cm/min --> km/h
+  - platform: template
+    id: wind_speed
+    name: "Velocidad del viento"
+    icon: mdi:weather-windy
+    unit_of_measurement: km/h
+    lambda: "return id(wind_speed_raw).state;"
+    update_interval: 3s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 20
+          send_every: 20
+  - platform: template
+    id: wind_gust_speed
+    name: "Velocidad de ráfagas"
+    icon: mdi:weather-windy
+    unit_of_measurement: km/h
+    lambda: "return id(wind_speed_raw).state;"
+    update_interval: 3s
+    filters:
+      - max:
+          window_size: 20
+          send_every: 1
+      - lambda: |-
+         static float lastValue = -1.0;
+         static unsigned int cnt = 0;
+         if(x>lastValue || x<(lastValue/2.0) || cnt>=30) {
+            cnt = 0;
+            lastValue = x;
+            return x;
+         } else {
+            cnt++;
+            return {};
+         }
+text_sensor:
+  - platform: version
+    name: "ESPHome Version"
+

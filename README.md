@@ -24,3 +24,6 @@ Two-valve plus transformer irrigation controller with a pressure sensor. If ther
 
 # wemosoled
 Single analog white strip lamp with wake-up routine and ambient sensors (temperature, humidity). Uses OLED display to show ambient conditions as well as lamp status and time.
+
+# relayboard
+Sample configuration for a 4-relay board. I'm not using this configuration as-is, but it's the generic one I based my toldo1 and riego2 configs.

@@ -1,0 +1,63 @@
+esphome:
+  name: ir1
+
+esp8266:
+  board: esp8285
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Ir1 Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+    
+remote_receiver:
+  pin:
+    number: GPIO14
+    inverted: true
+  dump: raw
+  idle: 25ms
+
+remote_transmitter:
+  pin: GPIO4
+  carrier_duty_percent: 50%
+
+climate:
+  - platform: heatpumpir
+    protocol: mitsubishi_msc
+    horizontal_default: auto
+    vertical_default: down
+    max_temperature: 31
+    min_temperature: 16
+    name: "A/A Buhardilla"
+
+#switch:
+#  - platform: template
+#    name: Turn on 26C
+#    turn_on_action:
+#      - remote_transmitter.transmit_raw:
+#          repeat:
+#            times: 2
+#            wait_time: 17ms
+#          code: [3440, -1689, 452, -1249, 452, -1250, 451, -415, 449, -389, 479, -384, 449, -1250, 452, -414, 449, -389, 449, -1249, 478, -1224, 477, -389, 449, -1250, 451, -415, 448, -389, 475, -1251, 451, -1250, 451, -388, 475, -1224, 477, -1250, 452, 
+#                 -389, 448, -415, 449, -1250, 451, -415, 449, -389, 448, -1250, 455, -412, 448, -389, 475, -389, 448, -416, 426, -411, 448, -416, 448, -389, 453, -411, 426, -411, 453, -411, 426, -438, 449, -388, 453, -411, 426, -411, 453, -411, 426, -438, 426, -412, 
+#                 426, -1273, 477, -389, 448, -389, 474, -1250, 429, -411, 476, -388, 427, -1272, 451, -1250, 429, -441, 423, -411, 453, -411, 426, -411, 453, -411, 426, -438, 426, -1273, 428, -411, 453, -1272, 429, -411, 427, -437, 426, -411, 453, -411, 427, -411, 452, 
+#                -414, 424, -437, 426, -412, 426, -1272, 455, -412, 426, -1272, 429, -437, 427, -411, 452, -412, 426, -411, 453, -411, 426, -438, 426, -411, 427, -436, 427, -411, 453, -411, 426, -411, 453, -411, 427, -437, 426, -411, 453, -411, 426, -411, 453, -411, 
+#                427, -437, 426, -411, 427, -437, 426, -411, 453, -411, 427, -411, 453, -411, 426, -437, 427, -411, 455, -408, 427, -411, 452, -411, 427, -437, 427, -411, 426, -437, 427, -411, 453, -411, 426, -1272, 430, -436, 427, -411, 427, -1272, 455, -411, 427, 
+#                -1271, 430, -1272, 455, -411, 427
+#                ]
+

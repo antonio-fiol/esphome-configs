@@ -1,5 +1,7 @@
 esphome:
   name: cabecero
+  includes:
+    - dim.h
   on_boot:
     - lambda: |-
         for(auto light : { id(central), id(izquierda), id(derecha) }) {
@@ -11,8 +13,8 @@ esphome:
 
 esp32:
   board: esp32dev
-  framework:
-    type: arduino
+#  framework:
+#    type: arduino
 
 # Enable logging
 logger:
@@ -34,6 +36,12 @@ wifi:
     password: !secret fallback_pass
 
 captive_portal:
+
+sun:
+  latitude: !secret latitude
+  longitude: !secret longitude
+time:
+  - platform: homeassistant
 
 output:
   - platform: ledc
@@ -88,7 +96,17 @@ script:
               id(izquierda).remote_values.is_on() || 
               id(central  ).remote_values.is_on() || 
               id(derecha  ).remote_values.is_on()
-          ); 
+          );
+
+interval:
+  - interval: 1min
+    then:
+      - lambda: |-
+          if(id(auto_up_down).state) {
+            dim(id(derecha), -0.01, 1);
+            dim(id(izquierda), -0.01, 1);
+          }
+
 switch:
   - platform: gpio
     pin: GPIO17
@@ -96,6 +114,12 @@ switch:
     id: enable_out
     internal: true
     restore_mode: ALWAYS_OFF
+  - platform: template
+    optimistic: true
+    id: auto_up_down
+    name: Encendido y apagado auto
+    restore_state: true
+    icon: mdi:lightbulb-auto
 
 sensor:
   - platform: wifi_signal
@@ -115,18 +139,7 @@ sensor:
       mode: INPUT_PULLUP
     on_value:
       - lambda: |-
-          auto light = id(central);
-          auto call = light->make_call();
-          float tmpb = (light->remote_values.is_on()?light->remote_values.get_brightness():0)+x/25.0;
-          float bri = tmpb<0.0?0.0:(tmpb>1.0?1.0:tmpb);
-          if(bri>0.0) {
-            call.set_brightness(bri);
-            call.set_state(true);
-          } else {
-            call.set_brightness(0.3);
-            call.set_state(false);
-          }
-          call.perform();
+          dim(id(central), x/25.0, 1);
       - sensor.rotary_encoder.set_value:
           id: encoder1
           value: 0
@@ -143,18 +156,7 @@ sensor:
       mode: INPUT_PULLUP
     on_value:
       - lambda: |-
-          auto light = id(izquierda);
-          auto call = light->make_call();
-          float tmpb = (light->remote_values.is_on()?light->remote_values.get_brightness():0)+x/25.0;
-          float bri = tmpb<0.0?0.0:(tmpb>1.0?1.0:tmpb);
-          if(bri>0.0) {
-            call.set_brightness(bri);
-            call.set_state(true);
-          } else {
-            call.set_brightness(0.3);
-            call.set_state(false);
-          }
-          call.perform();
+          dim(id(izquierda), x/25.0, 1);
       - sensor.rotary_encoder.set_value:
           id: encoder2
           value: 0
@@ -171,18 +173,7 @@ sensor:
       mode: INPUT_PULLUP
     on_value:
       - lambda: |-
-          auto light = id(central);
-          auto call = light->make_call();
-          float tmpb = (light->remote_values.is_on()?light->remote_values.get_brightness():0)+x/25.0;
-          float bri = tmpb<0.0?0.0:(tmpb>1.0?1.0:tmpb);
-          if(bri>0.0) {
-            call.set_brightness(bri);
-            call.set_state(true);
-          } else {
-            call.set_brightness(0.3);
-            call.set_state(false);
-          }
-          call.perform();
+          dim(id(central), x/25.0, 1);
       - sensor.rotary_encoder.set_value:
           id: encoder3
           value: 0
@@ -199,21 +190,34 @@ sensor:
       mode: INPUT_PULLUP
     on_value:
       - lambda: |-
-          auto light = id(derecha);
-          auto call = light->make_call();
-          float tmpb = (light->remote_values.is_on()?light->remote_values.get_brightness():0)+x/25.0;
-          float bri = tmpb<0.0?0.0:(tmpb>1.0?1.0:tmpb);
-          if(bri>0.0) {
-            call.set_brightness(bri);
-            call.set_state(true);
-          } else {
-            call.set_brightness(0.3);
-            call.set_state(false);
-          }
-          call.perform();
+          dim(id(derecha), x/25.0, 1);
       - sensor.rotary_encoder.set_value:
           id: encoder4
           value: 0
+  - platform: adc
+    id: fsr1
+    name: fsr1
+    pin: GPIO39
+    update_interval: 1s
+    accuracy_decimals: 1
+    attenuation: auto
+    entity_category: diagnostic
+    filters:
+      - or:
+        - delta: 0.1
+        - heartbeat: 120s
+  - platform: adc
+    id: fsr2
+    name: fsr2
+    pin: GPIO36
+    update_interval: 1s
+    accuracy_decimals: 1
+    attenuation: auto
+    entity_category: diagnostic
+    filters:
+      - or:
+        - delta: 0.3
+        - heartbeat: 120s
 
 binary_sensor:
   - platform: gpio
@@ -300,6 +304,49 @@ binary_sensor:
            - light.turn_off: central
            - light.turn_off: izquierda
            - light.turn_off: derecha
+  - platform: analog_threshold
+    sensor_id: fsr1
+    threshold:
+      upper: 2.2
+      lower: 1.1
+    device_class: occupancy
+    name: Presencia Izquierda
+    on_press:
+      - if:
+          condition:
+            - sun.is_below_horizon:
+          then:
+            - lambda: |-
+                if(id(auto_up_down).state) dim(id(izquierda), 0.1, 0.3);
+    on_release:
+      - if:
+          condition:
+            - sun.is_below_horizon:
+          then:
+            - lambda: |-
+                if(id(auto_up_down).state) dim(id(izquierda), 0.1, 0.3);
+  - platform: analog_threshold
+    sensor_id: fsr2
+    threshold:
+      upper: 2.2
+      lower: 1.1
+    device_class: occupancy
+    name: Presencia Derecha
+    on_press:
+      - if:
+          condition:
+            - sun.is_below_horizon:
+          then:
+            - lambda: |-
+                if(id(auto_up_down).state) dim(id(derecha), 0.1, 0.3);
+    on_release:
+      - if:
+          condition:
+            - sun.is_below_horizon:
+          then:
+            - lambda: |-
+                if(id(auto_up_down).state) dim(id(derecha), 0.1, 0.3);
+    
 
 text_sensor:
   - platform: version

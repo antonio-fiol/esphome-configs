@@ -15,3 +15,76 @@ sensor:
   - platform: wifi_signal
     name: "WiFi Signal Sensor"
     update_interval: 60s
+  - platform: template
+    id: remaining_time
+    name: Restante
+    icon: mdi:timer
+    unit_of_measurement: s
+    accuracy_decimals: 0
+
+number:
+  - platform: template
+    id: ui_zone_duration
+    name: Tiempo
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 2
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: min
+    mode: slider
+    
+        
+binary_sensor:
+#  - platform: copy
+#    source_id: relay
+#    id: relay_toff
+#    internal: true
+#    filters:
+#      delayed_on: 600s
+#    on_press:
+#      then:
+#        switch.turn_off: relay
+#  - platform: copy
+#    source_id: relay
+#    id: relay_start_timer
+#    internal: true
+#    on_press:
+#       - sensor.template.publish:
+#           id: remaining_time
+#           state: !lambda 'return id(ui_zone_duration).state * 60;'
+  - platform: template
+    lambda: return id(relay).state;
+    id: relay_toff
+    internal: true
+    filters:
+      delayed_on: 600s
+    on_press:
+      then:
+        switch.turn_off: relay
+  - platform: template
+    lambda: return id(relay).state;
+    id: relay_start_timer
+    internal: true
+    on_press:
+       - sensor.template.publish:
+           id: remaining_time
+           state: !lambda 'return id(ui_zone_duration).state * 60;'
+
+
+    
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          if (id(remaining_time).state > 0 && id(relay).state) {
+              // Decrement the timer.
+              if (id(remaining_time).state <= 5) {
+                id(relay).turn_off();
+                id(remaining_time).publish_state(0);
+              } else {
+                id(remaining_time).publish_state(id(remaining_time).state - 5);
+              }
+          }
+

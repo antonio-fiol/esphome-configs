@@ -307,14 +307,21 @@ binary_sensor:
   - platform: analog_threshold
     sensor_id: fsr1
     threshold:
-      upper: 2.2
-      lower: 1.1
+      upper: 2.3
+      lower: 1.0
     device_class: occupancy
     name: Presencia Izquierda
     on_press:
       - if:
           condition:
-            - sun.is_below_horizon:
+            and:
+              - sun.is_below_horizon:
+              - or:
+                  - light.is_off: izquierda
+                  - for:
+                      time: 1min
+                      condition:
+                        light.is_on: izquierda
           then:
             - lambda: |-
                 if(id(auto_up_down).state) dim(id(izquierda), 0.1, 0.3);
@@ -328,14 +335,21 @@ binary_sensor:
   - platform: analog_threshold
     sensor_id: fsr2
     threshold:
-      upper: 2.2
-      lower: 1.1
+      upper: 2.3
+      lower: 1.0
     device_class: occupancy
     name: Presencia Derecha
     on_press:
       - if:
           condition:
-            - sun.is_below_horizon:
+            and:
+              - sun.is_below_horizon:
+              - or:
+                  - light.is_off: derecha
+                  - for:
+                      time: 1min
+                      condition:
+                        light.is_on: derecha
           then:
             - lambda: |-
                 if(id(auto_up_down).state) dim(id(derecha), 0.1, 0.3);

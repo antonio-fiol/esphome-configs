@@ -1,0 +1,244 @@
+# This file is a sample to use your ESP12F_Relay_X4 board with
+# ESPhome (esphome.io)
+# and
+# Home Assistant (home-assistant.io)
+#
+# Simply add your wifi credentials and run from the command line
+# esphome.py relayboard.yaml run
+# or use this file as a sample when building yours in the
+# Home Assistant ESPhome add-on
+esphome:
+  name: persianas1
+  platform: ESP8266
+  board: esp12e
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Persianas1 Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+#  baud_rate: 0 #need this to free up UART pins
+
+# Enable Home Assistant API
+api:
+
+# Enable over-the-air flashing
+ota:
+
+# Use the blue LED in the device as a status LED, which will blink if there are warnings (slow) or errors (fast)
+#status_led:
+#  pin:
+#    number: GPIO5
+#    inverted: True
+
+# Four relay outputs, exposed as switches in Home Assistant
+switch:
+  - platform: gpio
+    pin: GPIO16
+    name: Relay1
+    disabled_by_default: true
+    id: abrir2
+    interlock: [ cerrar2, abrir2 ]
+    interlock_wait_time: .2s
+  - platform: gpio
+    pin: GPIO14
+    name: Relay2
+    disabled_by_default: true
+    id: cerrar2
+    interlock: [ cerrar2, abrir2 ]
+    interlock_wait_time: .2s
+  - platform: gpio
+    pin: GPIO12
+    name: Relay3
+    disabled_by_default: true
+    id: cerrar1
+    interlock: [ cerrar1, abrir1 ]
+    interlock_wait_time: .2s
+  - platform: gpio
+    pin: GPIO13
+    name: Relay4
+    disabled_by_default: true
+    id: abrir1
+    interlock: [ cerrar1, abrir1 ]
+    interlock_wait_time: .2s
+
+cover:
+  - platform: time_based
+    name: Salon Izquierda
+    id: cover1
+    device_class: shutter
+    open_action:
+      - switch.turn_on: abrir1
+    open_duration: 28.028s
+    close_action:
+      - switch.turn_on: cerrar1
+    close_duration: 27.721s
+    stop_action:
+      - switch.turn_off: abrir1
+      - switch.turn_off: cerrar1
+    has_built_in_endstop: True
+  - platform: time_based
+    name: Salon Derecha
+    id: cover2
+    device_class: shutter
+    open_action:
+      - switch.turn_on: abrir2
+    open_duration: 28.028s
+    close_action:
+      - switch.turn_on: cerrar2
+    close_duration: 27.721s
+    stop_action:
+      - switch.turn_off: abrir2
+      - switch.turn_off: cerrar2
+    has_built_in_endstop: True
+
+
+sensor:
+  # OPTIONAL, if you want to monitor the device's wifi signal from Home Assistant
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 60s
+  # OPTIONAL, if you are planning to connect an analog sensor to ADC input.
+  # IMPORTANT: The ADC input only supports signals between 0V-1V.
+  # Do not exceed this range if you don't want to fry your device.
+#  - platform: adc
+#    pin: A0
+#    name: "Analog input"
+#    update_interval: 60s
+
+# NOTE: GPIO0, GPIO2, GPIO4, GPIO5 and GPIO15 are exposed on the board
+# but not used in this sample. You could use them either as inputs or
+# outputs, with the usual restrictions on ESP8266 devices.
+
+# NOTE: GPIO15 can not be pulled up because there is a pull-down on the board.
+
+binary_sensor:
+  - platform: template
+    id: timeout1
+    internal: true
+    lambda: |-
+      return ( id(abrir1).state || id(cerrar1).state ) && ( id(cover1).is_fully_closed() || id(cover1).is_fully_open() );
+    on_press:
+      - cover.stop: cover1
+    filters:
+      - delayed_on: 3s
+  - platform: template
+    id: timeout2
+    internal: true
+    lambda: |-
+      return ( id(abrir2).state || id(cerrar2).state ) && ( id(cover2).is_fully_closed() || id(cover2).is_fully_open() );
+    on_press:
+      - cover.stop: cover2
+    filters:
+      - delayed_on: 3s
+  - platform: gpio
+    id: boton1
+    pin:
+      number: GPIO5
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    on_click:
+      - if:
+          condition:
+            or:
+              - switch.is_on: abrir1
+              - switch.is_on: cerrar1
+          then:
+            - cover.stop: cover1
+          else:
+            - cover.open: cover1
+  - platform: gpio
+    id: boton2
+    pin:
+      number: GPIO2
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    on_click:
+      - if:
+          condition:
+            or:
+              - switch.is_on: abrir1
+              - switch.is_on: cerrar1
+          then:
+            - cover.stop: cover1
+          else:
+            - lambda: |-
+                auto c = id(cover1);
+                auto call = c->make_call();
+                if (c->position > .15) {
+                  call.set_position(0.1);
+                } else {
+                  call.set_position(0);
+                }
+                call.perform();
+  - platform: gpio
+    id: boton3
+    pin:
+      number: GPIO0
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    on_click:
+      - if:
+          condition:
+            or:
+              - switch.is_on: abrir2
+              - switch.is_on: cerrar2
+          then:
+            - cover.stop: cover2
+          else:
+            - cover.open: cover2
+  - platform: gpio
+    id: boton4
+    pin:
+      number: GPIO4
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    on_click:
+      - if:
+          condition:
+            or:
+              - switch.is_on: abrir2
+              - switch.is_on: cerrar2
+          then:
+            - cover.stop: cover2
+          else:
+            - lambda: |-
+                auto c = id(cover2);
+                auto call = c->make_call();
+                if (c->position > .15) {
+                  call.set_position(0.1);
+                } else {
+                  call.set_position(0);
+                }
+                call.perform();
+button:
+  - platform: template
+    name: Salon Izquierda Auto
+    on_press: 
+      then:
+        - cover.control: 
+            position: 10%
+            id: cover1
+  - platform: template
+    name: Salon Derecha Auto
+    on_press: 
+      then:
+        - cover.control: 
+            position: 10%
+            id: cover2

@@ -147,7 +147,7 @@ binary_sensor:
       mode:
         input: true
         pullup: true
-    on_click:
+    on_press:
       - if:
           condition:
             or:
@@ -165,7 +165,7 @@ binary_sensor:
       mode:
         input: true
         pullup: true
-    on_click:
+    on_press:
       - if:
           condition:
             or:
@@ -176,9 +176,10 @@ binary_sensor:
           else:
             - lambda: |-
                 auto c = id(cover1);
+                auto alt = id(alt1).state;
                 auto call = c->make_call();
-                if (c->position > .15) {
-                  call.set_position(0.1);
+                if (c->position > alt/70.0) {
+                  call.set_position(alt/100.0);
                 } else {
                   call.set_position(0);
                 }
@@ -191,7 +192,7 @@ binary_sensor:
       mode:
         input: true
         pullup: true
-    on_click:
+    on_press:
       - if:
           condition:
             or:
@@ -209,7 +210,7 @@ binary_sensor:
       mode:
         input: true
         pullup: true
-    on_click:
+    on_press:
       - if:
           condition:
             or:
@@ -220,9 +221,10 @@ binary_sensor:
           else:
             - lambda: |-
                 auto c = id(cover2);
+                auto alt = id(alt2).state;
                 auto call = c->make_call();
-                if (c->position > .15) {
-                  call.set_position(0.1);
+                if (c->position > alt/70.0) {
+                  call.set_position(alt/100.0);
                 } else {
                   call.set_position(0);
                 }
@@ -232,13 +234,34 @@ button:
     name: Salon Izquierda Auto
     on_press: 
       then:
-        - cover.control: 
-            position: 10%
-            id: cover1
+        - lambda: |-
+            auto call = id(cover2).make_call();
+            call.set_position(id(alt2).state/100.0);
+            call.perform();
   - platform: template
     name: Salon Derecha Auto
     on_press: 
       then:
-        - cover.control: 
-            position: 10%
-            id: cover2
+        - lambda: |-
+            auto call = id(cover2).make_call();
+            call.set_position(id(alt2).state/100.0);
+            call.perform();
+number:
+  - platform: template
+    name: Altura Izquierda Auto
+    id: alt1
+    entity_category: config
+    max_value: 50
+    min_value: 0
+    step: 1
+    initial_value: 10
+    optimistic: True
+  - platform: template
+    name: Altura Derecha Auto
+    id: alt2
+    entity_category: config
+    max_value: 50
+    min_value: 0
+    step: 1
+    initial_value: 10
+    optimistic: True

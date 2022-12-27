@@ -235,8 +235,8 @@ button:
     on_press: 
       then:
         - lambda: |-
-            auto call = id(cover2).make_call();
-            call.set_position(id(alt2).state/100.0);
+            auto call = id(cover1).make_call();
+            call.set_position(id(alt1).state/100.0);
             call.perform();
   - platform: template
     name: Salon Derecha Auto

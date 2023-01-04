@@ -22,6 +22,9 @@ Simple ESP01-relay based single valve irrigation controller.
 # riego2
 Two-valve plus transformer irrigation controller with a pressure sensor. If there is no water pressure, time doesn't count and the system waits until there actually is water available.
 
+# persianas1
+Motorized rolling shutter controller (time-based cover) with a pre-set closing position other than fully-closed, and a 4-button panel.
+
 # wemosoled
 Single analog white strip lamp with wake-up routine and ambient sensors (temperature, humidity). Uses OLED display to show ambient conditions as well as lamp status and time.
 

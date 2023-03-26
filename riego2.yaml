@@ -116,6 +116,7 @@ sensor:
     name: "Presion Agua"
     id: presion
     update_interval: 30s
+    device_class: ""
     unit_of_measurement: '%'
     accuracy_decimals: 0
     filters:

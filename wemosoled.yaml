@@ -40,9 +40,12 @@ time:
           - script.execute: auto_down_off
 
 font:
-  - file: 'fonts/Purisa.ttf'
+#  - file: 'fonts/Purisa.ttf'
+#    id: font1
+#    size: 22
+  - file: 'gfonts://Roboto'
     id: font1
-    size: 22
+    size: 20
 
 i2c:
   sda: 5
@@ -191,7 +194,7 @@ switch:
 display:
   - platform: ssd1306_i2c
     model: "SSD1306 128x64"
-    reset_pin: GPIO13
+#    reset_pin: GPIO13
     address: 0x3C
     update_interval: 0.5s
     rotation: 180

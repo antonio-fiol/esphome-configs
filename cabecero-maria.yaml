@@ -47,7 +47,7 @@ wifi:
 wireguard:
   address: !secret cabecero_maria_address
   private_key: !secret cabecero_maria_private_key
-  peer_key: !secret peer_key
+  peer_public_key: !secret peer_key
   peer_endpoint: !secret peer_endpoint
 
 captive_portal:
@@ -91,16 +91,16 @@ light:
     restore_mode: ALWAYS_OFF
   - platform: monochromatic
     output: out3
-    name: Izquierda
-    id: izquierda
+    name: Derecha
+    id: derecha
     default_transition_length: 0.25s
     on_turn_on: *runscript
     on_turn_off: *runscript
     restore_mode: ALWAYS_OFF
   - platform: monochromatic
     output: out1
-    name: Derecha
-    id: derecha
+    name: Izquierda
+    id: izquierda
     default_transition_length: 0.25s
     on_turn_on: *runscript
     on_turn_off: *runscript
@@ -158,7 +158,7 @@ sensor:
       mode: INPUT_PULLUP
     on_value:
       - lambda: |-
-          dim(id(central), x/25.0, 1);
+          dim(id(derecha), x/25.0, 1);
       - sensor.rotary_encoder.set_value:
           id: encoder1
           value: 0
@@ -175,7 +175,7 @@ sensor:
       mode: INPUT_PULLUP
     on_value:
       - lambda: |-
-          dim(id(izquierda), x/25.0, 1);
+          dim(id(central), x/25.0, 1);
       - sensor.rotary_encoder.set_value:
           id: encoder2
           value: 0
@@ -192,7 +192,7 @@ sensor:
       mode: INPUT_PULLUP
     on_value:
       - lambda: |-
-          dim(id(central), x/25.0, 1);
+          dim(id(izquierda), x/25.0, 1);
       - sensor.rotary_encoder.set_value:
           id: encoder3
           value: 0
@@ -209,7 +209,7 @@ sensor:
       mode: INPUT_PULLUP
     on_value:
       - lambda: |-
-          dim(id(derecha), x/25.0, 1);
+          dim(id(central), x/25.0, 1);
       - sensor.rotary_encoder.set_value:
           id: encoder4
           value: 0
@@ -225,7 +225,7 @@ binary_sensor:
       inverted: true
     on_press:
       - lambda: |-
-          auto light = id(central);
+          auto light = id(derecha);
           auto call = light->toggle();
           call.set_brightness(0.3);
           call.perform();
@@ -246,7 +246,7 @@ binary_sensor:
       inverted: true
     on_press:
       - lambda: |-
-          auto light = id(izquierda);
+          auto light = id(central);
           auto call = light->toggle();
           call.set_brightness(0.3);
           call.perform();
@@ -267,7 +267,7 @@ binary_sensor:
       inverted: true
     on_press:
       - lambda: |-
-          auto light = id(central);
+          auto light = id(izquierda);
           auto call = light->toggle();
           call.set_brightness(0.3);
           call.perform();
@@ -288,7 +288,7 @@ binary_sensor:
       inverted: true
     on_press:
       - lambda: |-
-          auto light = id(derecha);
+          auto light = id(central);
           auto call = light->toggle();
           call.set_brightness(0.3);
           call.perform();

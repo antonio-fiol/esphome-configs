@@ -1,0 +1,228 @@
+# This file is a sample to use your ESP12F_Relay_X4 board with
+# ESPhome (esphome.io)
+# and
+# Home Assistant (home-assistant.io)
+#
+# Simply add your wifi credentials and run from the command line
+# esphome.py relayboard.yaml run
+# or use this file as a sample when building yours in the
+# Home Assistant ESPhome add-on
+esphome:
+  name: relayboard-shield1
+  platform: ESP8266
+  board: esp12e
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "RelayboardShield1 Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+  baud_rate: 0 #need this to free up UART pins
+
+# Enable Home Assistant API
+api:
+
+# Enable over-the-air flashing
+ota:
+
+# Use the blue LED in the device as a status LED, which will blink if there are warnings (slow) or errors (fast)
+status_led:
+  pin:
+    number: GPIO5
+    inverted: True
+    
+i2c:
+  sda: GPIO14
+  scl: GPIO13
+  scan: true
+  
+mcp23017:
+  - id: mcp
+    address: 0x20
+
+binary_sensor:
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 0
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin0
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 1
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin1
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 2
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin2
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 3
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin3
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 4
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin4
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 5
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin5
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 6
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin6
+# pin 7 not connected
+#   - platform: gpio
+#     pin:
+#       mcp23xxx: mcp
+#       number: 7
+#       mode:
+#         input: true
+#         pullup: true
+#       inverted: true
+#     name: pin7
+
+
+# Four relay outputs, exposed as switches in Home Assistant
+switch:
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 8
+       mode:
+         output: true
+       inverted: false
+     name: pin8
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 9
+       mode:
+         output: true
+       inverted: false
+     name: pin9
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 10
+       mode:
+         output: true
+       inverted: false
+     name: pin10
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 11
+       mode:
+         output: true
+       inverted: false
+     name: pin11
+# pins 12-15 not connected
+#   - platform: gpio
+#     pin:
+#       mcp23xxx: mcp
+#       number: 12
+#       mode:
+#         output: true
+#       inverted: false
+#     name: pin12
+#   - platform: gpio
+#     pin:
+#       mcp23xxx: mcp
+#       number: 13
+#       mode:
+#         output: true
+#       inverted: false
+#     name: pin13
+#   - platform: gpio
+#     pin:
+#       mcp23xxx: mcp
+#       number: 14
+#       mode:
+#         output: true
+#       inverted: false
+#     name: pin14
+#   - platform: gpio
+#     pin:
+#       mcp23xxx: mcp
+#       number: 15
+#       mode:
+#         output: true
+#       inverted: false
+#     name: pin15
+
+#  - platform: gpio
+#    pin: GPIO16
+#    name: Relay1
+#    id: relay1
+#  - platform: gpio
+#    pin: GPIO14
+#    name: Relay2
+#    id: relay2
+#  - platform: gpio
+#    pin: GPIO12
+#    name: Relay3
+#    id: relay3
+#  - platform: gpio
+#    pin: GPIO13
+#    name: Relay4
+#    id: relay4
+
+sensor:
+  # OPTIONAL, if you want to monitor the device's wifi signal from Home Assistant
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 60s
+  # OPTIONAL, if you are planning to connect an analog sensor to ADC input.
+  # IMPORTANT: The ADC input only supports signals between 0V-1V.
+  # Do not exceed this range if you don't want to fry your device.
+#  - platform: adc
+#    pin: A0
+#    name: "Analog input"
+#    update_interval: 60s
+
+# NOTE: GPIO0, GPIO2, GPIO4, GPIO5 and GPIO15 are exposed on the board
+# but not used in this sample. You could use them either as inputs or
+# outputs, with the usual restrictions on ESP8266 devices.
+

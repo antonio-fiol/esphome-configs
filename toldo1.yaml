@@ -36,13 +36,13 @@ status_led:
 
 # Four relay outputs, exposed as switches in Home Assistant
 switch:
-  - platform: gpio
-    pin: GPIO16
-    id: led_abrir
-    internal: true
+#  - platform: gpio
+#    pin: GPIO16
+#    id: led_abrir
+#    internal: true
   - platform: gpio
     pin: GPIO14
-    id: led_cerrar
+    id: sentido_abrir
     internal: true
   - platform: gpio
     pin: GPIO12
@@ -108,32 +108,30 @@ binary_sensor:
             - cover.stop: cover1
           else:
             - cover.close: cover1
-  - platform: template
-    id: status_blinker
-    internal: true
-    lambda: |-
-      auto s = App.get_app_state();
-      if((s & STATUS_LED_ERROR) != 0u) return millis() % 250u < 150u;
-      if((s & STATUS_LED_WARNING) != 0u) return millis() % 1500u < 250u;
-      return false;
+#  - platform: template
+#    id: status_blinker
+#    internal: true
+#    lambda: |-
+#      auto s = App.get_app_state();
+#      if((s & STATUS_LED_ERROR) != 0u) return millis() % 250u < 150u;
+#      if((s & STATUS_LED_WARNING) != 0u) return millis() % 1500u < 250u;
+#      return false;
   - platform: template
     id: out_abrir_sensor
     internal: true
     lambda: |-
-      return id(status_blinker).state || id(abrir).state;
+      return id(abrir).state;
     on_press:
-      - switch.turn_on: led_abrir
+      - switch.turn_on: sentido_abrir
     on_release:
-      - switch.turn_off: led_abrir
+      - switch.turn_off: sentido_abrir
   - platform: template
     id: out_cerrar_sensor
     internal: true
     lambda: |-
-      return id(status_blinker).state || id(cerrar).state;
+      return id(cerrar).state;
     on_press:
-      - switch.turn_on: led_cerrar
-    on_release:
-      - switch.turn_off: led_cerrar
+      - switch.turn_off: sentido_abrir
   - platform: template
     id: timeout
     internal: true

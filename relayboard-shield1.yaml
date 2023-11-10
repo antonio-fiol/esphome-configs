@@ -9,6 +9,12 @@
 # Home Assistant ESPhome add-on
 esphome:
   name: relayboard-shield1
+  on_boot:
+    priority: 500 # 600: This is where most sensors are set up.
+    then:
+      - delay: 10s
+      - logger.log: "Booted ON"
+      - switch.turn_on: booted
 
 esp8266:
   board: esp12e
@@ -124,6 +130,7 @@ binary_sensor:
        - delayed_off: 200ms
      on_state:
        then:
+         - logger.log: "Cambio en entrada 1"
          - if:
              condition:
                - switch.is_off: pin10
@@ -145,6 +152,7 @@ binary_sensor:
        - delayed_off: 200ms
      on_state:
        then:
+         - logger.log: "Cambio en entrada 2"
          - if:
              condition:
                - switch.is_off: pin10
@@ -236,6 +244,10 @@ switch:
      id: pin11
      restore_mode: ALWAYS_OFF
 # pins 12-15 not connected
+   - platform: template
+     optimistic: true
+     restore_mode: ALWAYS_OFF
+     id: booted
 
 sensor:
   # OPTIONAL, if you want to monitor the device's wifi signal from Home Assistant
@@ -276,19 +288,27 @@ button:
     id: programa1
     on_press:
       then:
-       - sensor.template.publish:
-           id: remaining_time1
-           state: !lambda 'return id(dur1).state * 60;'
-       - switch.turn_on: pin10
+       - if:
+          condition:
+            - switch.is_on: booted
+          then:     
+            - sensor.template.publish:
+                id: remaining_time1
+                state: !lambda 'return id(dur1).state * 60;'
+            - switch.turn_on: pin10
   - platform: template
     name: Iniciar Programa 2
     id: programa2
     on_press:
       then:
-       - sensor.template.publish:
-           id: remaining_time1
-           state: !lambda 'return id(dur2).state * 60;'
-       - switch.turn_on: pin10
+       - if:
+          condition:
+            - switch.is_on: booted
+          then:     
+            - sensor.template.publish:
+                id: remaining_time1
+                state: !lambda 'return id(dur2).state * 60;'
+            - switch.turn_on: pin10
 number:
   - platform: template
     name: Duracion Programa 1

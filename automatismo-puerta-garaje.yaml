@@ -1,0 +1,116 @@
+esphome:
+  name: automatismo-puerta-garaje
+  friendly_name: automatismo-puerta-garaje
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "/NoWt1tdn7Q9H88oXCTyj7kGTD+m0zNM5rsaUIj/UmY="
+
+ota:
+  password: "c328c5abd4ea5e570258101b3921f9ef"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Fallback ${name}"
+    password: !secret fallback_pass
+
+captive_portal:
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+    name: Fotodetector
+    device_class: safety
+    id: in_foto
+  - platform: gpio
+    pin:
+      number: GPIO14
+      mode: INPUT_PULLUP
+      inverted: True
+    id: in_aux
+
+  - platform: gpio
+    pin:
+      number: GPIO26
+      mode: INPUT_PULLUP
+    name: Puerta Abierta
+    device_class: garage_door
+    id: in_sens
+  - platform: gpio
+    pin:
+      number: GPIO27
+      mode: INPUT_PULLUP
+      inverted: True
+    id: in_senb
+
+#  - platform: gpio
+#    pin:
+#      number: GPIO21
+#      mode: INPUT_PULLUP
+#      inverted: True
+#    id: in_a
+#  - platform: gpio
+#    pin:
+#      number: GPIO17
+#      mode: INPUT_PULLUP
+#      inverted: True
+#    id: in_b
+#  - platform: gpio
+#    pin:
+#      number: GPIO16
+#      mode: INPUT_PULLUP
+#      inverted: True
+#    id: in_c
+
+
+switch:
+  - platform: gpio
+    pin: GPIO25
+    id: pulsador
+    on_turn_on: 
+      then:
+        - delay: 
+            seconds: 0.5
+        - switch.turn_off: pulsador
+
+button:
+  - platform: template
+    name: Accionar
+    on_press:
+      - switch.turn_on: pulsador
+
+output:
+  - platform: ledc
+    pin: GPIO32
+    id: laser1
+    min_power: 0.1
+    zero_means_zero: True
+  - platform: ledc
+    pin: GPIO33
+    id: laser2
+    min_power: 0.1
+    zero_means_zero: True
+
+# Example usage in a light
+light:
+  - platform: monochromatic
+    output: laser1
+    name: "Laser 1"
+  - platform: monochromatic
+    output: laser2
+    name: "Laser 2"

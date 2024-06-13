@@ -137,7 +137,7 @@ switch:
     optimistic: true
     id: auto_up_down
     name: Encendido y apagado auto
-    restore_state: true
+    restore_mode: RESTORE_DEFAULT_OFF
     icon: mdi:lightbulb-auto
 
 sensor:

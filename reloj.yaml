@@ -23,7 +23,7 @@ wifi:
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Reloj Fallback Hotspot"
-    password: "4Zhc0A2q9vPd"
+    password: !secret fallback_pass
 
 captive_portal:
 
@@ -32,6 +32,18 @@ web_server:
 time:
   - platform: sntp
     id: sntp_time
+    on_time_sync: 
+      then:
+        - delay: 1s
+        - light.turn_on:
+            id: arointerior
+            brightness: 0.4
+            effect: "Minuto Encendido Segundo Rojo Import-export Plus"
+
+        - light.turn_on: 
+            id: aroexterior
+            brightness: 0.4
+            effect: "Hora Encendida"
 
 sensor:
   - platform: homeassistant
@@ -41,11 +53,19 @@ sensor:
     entity_id: sensor.template_grid_export_power
     id: ex_pwr
 
+binary_sensor:
+  # Known consumption devices
+  - platform: homeassistant
+    entity_id: switch.radiador750w
+    id: radiador750w
+  - platform: homeassistant
+    entity_id: switch.radiador1250w
+    id: radiador1250w
+
 light:
   - platform: partition
     id: aux
     segments:
-      # Use first 10 LEDs from the light with ID light1
       - id: arointerior61
         from: 1
         to: 60
@@ -53,6 +73,7 @@ light:
 
   - platform: partition
     name: "AroInterior"
+    id: arointerior
     segments:
       - id: aux
         from: 2
@@ -65,67 +86,100 @@ light:
          name: "Minuto Negro Segundo Rojo"
          update_interval: 1000ms
          lambda: |-
-           static Color rojo = Color(255,0,0,0);
-           auto ahora = id(sntp_time).now();
-           it.all() = current_color;
-           it[ahora.second] = rojo;
-           it[ahora.minute] = Color::BLACK;
+            static Color rojo = Color(255,0,0,0);
+            auto ahora = id(sntp_time).now();
+            it.all() = current_color;
+            it[ahora.second] = rojo;
+            it[ahora.minute] = Color::BLACK;
 
       - addressable_lambda:
          name: "Minuto Encendido Segundo Rojo"
          update_interval: 1000ms
          lambda: |-
-           static Color rojo = Color(255,0,0,0);
-           auto ahora = id(sntp_time).now();
-           it.all() = Color::BLACK;
-           it[ahora.second] = rojo;
-           it[ahora.minute] = current_color;
+            static Color rojo = Color(255,0,0,0);
+            auto ahora = id(sntp_time).now();
+            it.all() = Color::BLACK;
+            it[ahora.second] = rojo;
+            it[ahora.minute] = current_color;
 
       - addressable_lambda:
          name: "Minuto Negro Segundo Negro"
          update_interval: 1000ms
          lambda: |-
-           auto ahora = id(sntp_time).now();
-           it.all() = current_color;
-           it[ahora.second] = Color::BLACK;
-           it[ahora.minute] = Color::BLACK;
+            auto ahora = id(sntp_time).now();
+            it.all() = current_color;
+            it[ahora.second] = Color::BLACK;
+            it[ahora.minute] = Color::BLACK;
       - addressable_lambda:
          name: "Minuto Negro Segundo Random"
          update_interval: 1000ms
          lambda: |-
-           auto ahora = id(sntp_time).now();
-           it.all() = current_color;
-           it[ahora.second] = Color::random_color();
-           it[ahora.minute] = Color::BLACK;
+            auto ahora = id(sntp_time).now();
+            it.all() = current_color;
+            it[ahora.second] = Color::random_color();
+            it[ahora.minute] = Color::BLACK;
 
       - addressable_lambda:
          name: "Minuto Encendido Segundo Rojo Import-export"
          update_interval: 1000ms
          lambda: |-
-           static Color rojo = Color(255,0,0,0);
-           static Color verde = Color(0,127,0,0);
-           static Color naranja = Color(159,79,0,0);
-           auto ahora = id(sntp_time).now();
-           float f_ex = id(ex_pwr).state;
-           float f_im = id(im_pwr).state;
-           if(! (f_ex>0 || f_im>0) ) return;
-           int expwr = int(f_ex / 200.0);
-           int impwr = int(f_im / 200.0);
-           //if(ahora.second % 5 == 0) ESP_LOGD("lambda", "Export: %d   Import: %d", expwr, impwr);
-           it.all() = Color::BLACK;
-           if(expwr>0 && expwr<40) do {
-             it[(ahora.second+expwr)%60] = verde;
-           } while(expwr-- > 0);
-           if(impwr>0 && impwr<40) do {
-             it[(60+ahora.second-impwr)%60] = naranja;
-           } while(impwr-- > 0);
-           it[ahora.second] = rojo;
-           it[ahora.minute] = current_color;
+            static Color rojo = Color(255,0,0,0);
+            static Color verde = Color(0,127,0,0);
+            static Color naranja = Color(159,79,0,0);
+            auto ahora = id(sntp_time).now();
+            float f_ex = id(ex_pwr).state;
+            float f_im = id(im_pwr).state;
+            if(! (f_ex>0 || f_im>0) ) return;
+            int expwr = int(f_ex / 200.0);
+            int impwr = int(f_im / 200.0);
+            //if(ahora.second % 5 == 0) ESP_LOGD("lambda", "Export: %d   Import: %d", expwr, impwr);
+            it.all() = Color::BLACK;
+            if(expwr>0 && expwr<40) do {
+              it[(ahora.second+expwr)%60] = verde;
+            } while(expwr-- > 0);
+            if(impwr>0 && impwr<40) do {
+              it[(60+ahora.second-impwr)%60] = naranja;
+            } while(impwr-- > 0);
+            it[ahora.second] = rojo;
+            it[ahora.minute] = current_color;
+
+      - addressable_lambda:
+         name: "Minuto Encendido Segundo Rojo Import-export Plus"
+         update_interval: 1000ms
+         lambda: |-
+            static Color rojo = Color(255,0,0,0);
+            static Color verde = Color(0,127,0,0);
+            static Color naranja = Color(159,79,0,0);
+            static Color azul = Color(0,0,159,0);
+            auto ahora = id(sntp_time).now();
+            float f_ex = id(ex_pwr).state;
+            float f_im = id(im_pwr).state;
+            //if(ahora.second % 5 == 0) ESP_LOGD("lambda", "f_ex: %f   f_im: %f", f_ex, f_im);
+            if(!(f_ex>0 || f_im>0)) { f_ex = f_im = 250.0; }
+            int expwr = int(f_ex / 200.0);
+            int impwr = int(f_im / 200.0);
+            //if(ahora.second % 5 == 0) ESP_LOGD("lambda", "Export: %d   Import: %d", expwr, impwr);
+            it.all() = Color::BLACK;
+            int seg_azul = (id(radiador750w).state?3:0)+(id(radiador1250w).state?5:0);
+            if(seg_azul) {
+              int offset = (expwr > 0 && expwr<40)?expwr:1;
+              do {
+                it[(ahora.second+offset+seg_azul)%60] = azul;             
+              } while(seg_azul-- > 0);
+            }
+            if(expwr>0 && expwr<40) do {
+              it[(ahora.second+expwr)%60] = verde;
+            } while(expwr-- > 0);
+            if(impwr>0 && impwr<40) do {
+              it[(60+ahora.second-impwr)%60] = naranja;
+            } while(impwr-- > 0);
+            it[ahora.second] = rojo;
+            it[ahora.minute] = current_color;
 
   - platform: partition
     name: "AroExterior"
+    id: aroexterior
     segments:
-      # Use first 10 LEDs from the light with ID light1
       - id: aroexterior36
         from: 0
         to: 35
@@ -170,6 +224,7 @@ light:
     method:
       type: esp32_i2s
       bus: 0
+    
   - platform: neopixelbus
     type: GRBW
     variant: WS2812
@@ -179,26 +234,3 @@ light:
     method:
       type: esp32_i2s
       bus: 1
-
-#    effects:
-#      - addressable_lambda:
-#         name: "Hora"
-#         update_interval: 1000ms
-#         lambda: |-
-#          // it.size() - Number of LEDs
-#          // it[num] - Access the LED at index num.
-#          // Set the LED at num to the given r, g, b values
-#          // it[num] = Color(r, g, b);
-#          // Get the color at index num (Color instance)
-#          // it[num].get();
-
-#          // Example: Simple color wipe
-#          for (int i = it.size() - 1; i > 0; i--) {
-#            it[i] = it[i - 1].get();
-#          }
-#          it[0] = Color::random_color();
-
-#          // Bonus: use .range() and .all() to set many LEDs without having to write a loop.
-#          // it.range(0, 50) = Color::BLACK;
-#          // it.all().fade_to_black(10);      
-

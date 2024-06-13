@@ -166,8 +166,9 @@ sensor:
     update_interval: 3s
     unit_of_measurement: km/h
     filters:
-      - multiply: 25  # pulso --> cm
-      - multiply: 0.0006 # cm/min --> km/h
+#      - multiply: 25  # pulso --> cm
+#      - multiply: 0.0006 # cm/min --> km/h
+      - multiply: 0.081 # pulsos/min --> km/h experimental
   - platform: template
     id: wind_speed
     name: "Velocidad del viento"

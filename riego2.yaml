@@ -126,6 +126,8 @@ sensor:
             - 0.0 -> 0
             - 0.27 -> 7.29
             - 1 -> 100.0
+      - delta:
+          value: 1.0
   - platform: homeassistant
     id: ui_zone1_duration
     entity_id: input_number.irrigation_zone1_duration

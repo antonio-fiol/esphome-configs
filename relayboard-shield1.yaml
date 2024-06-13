@@ -191,7 +191,24 @@ binary_sensor:
        - delayed_on: 1800s
      on_press:
        then:
-         switch.turn_off: pin11
+         - if:
+            condition:
+              - switch.is_on: auto_off_luz
+            then:
+              - switch.turn_off: pin11
+   - platform: template
+     internal: true
+     id: toff4
+     lambda: |-
+       return id(pin11).state;
+     filters:
+       - delayed_on: 18000s
+     on_press:
+       then:
+         - switch.turn_off: pin11
+
+
+
 
 
 
@@ -248,6 +265,12 @@ switch:
      optimistic: true
      restore_mode: ALWAYS_OFF
      id: booted
+   - platform: template
+     name: Apagado auto luz garaje
+     id: auto_off_luz
+     entity_category: config
+     optimistic: True
+     restore_mode: RESTORE_DEFAULT_ON
 
 sensor:
   # OPTIONAL, if you want to monitor the device's wifi signal from Home Assistant

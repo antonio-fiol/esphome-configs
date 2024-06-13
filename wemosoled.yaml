@@ -1,6 +1,11 @@
 esphome:
   name: wemosoled
-  platform: ESP32
+  #platform: ESP32
+  #board: esp32dev
+
+esp32:
+  framework:
+    type: esp-idf
   board: esp32dev
 
 wifi:
@@ -51,6 +56,7 @@ i2c:
   sda: 5
   scl: 4
   scan: False
+  frequency: 800kHz
 
 text_sensor:
   - platform: homeassistant
@@ -257,3 +263,8 @@ script:
                 else:
                   - logger.log: "despertar end"
                   - switch.turn_off: despertar
+
+#bluetooth_proxy:
+#  active: true
+
+#esp32_ble_tracker:

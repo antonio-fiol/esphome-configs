@@ -97,6 +97,20 @@ script:
               id(central  ).remote_values.is_on() || 
               id(derecha  ).remote_values.is_on()
           );
+  - id: apagar_todo
+    then:
+           - light.turn_off: central
+           - light.turn_off: izquierda
+           - light.turn_off: derecha
+           - homeassistant.event:
+               event: esphome.cabecero.apagar_todo
+
+button:
+  - platform: template
+    name: Apagar todo
+    on_press: 
+      then:
+        - script.execute: apagar_todo
 
 interval:
   - interval: 1min
@@ -238,9 +252,7 @@ binary_sensor:
          condition:
            - binary_sensor.is_on: boton2
          then:
-           - light.turn_off: central
-           - light.turn_off: izquierda
-           - light.turn_off: derecha
+           - script.execute: apagar_todo
   - platform: gpio
     name: "Boton 2"
     id: boton2
@@ -259,9 +271,7 @@ binary_sensor:
          condition:
            - binary_sensor.is_on: boton1
          then:
-           - light.turn_off: central
-           - light.turn_off: izquierda
-           - light.turn_off: derecha
+           - script.execute: apagar_todo
   - platform: gpio
     name: "Boton 3"
     id: boton3
@@ -280,9 +290,7 @@ binary_sensor:
          condition:
            - binary_sensor.is_on: boton4
          then:
-           - light.turn_off: central
-           - light.turn_off: izquierda
-           - light.turn_off: derecha
+           - script.execute: apagar_todo
   - platform: gpio
     name: "Boton 4"
     id: boton4
@@ -301,9 +309,7 @@ binary_sensor:
          condition:
            - binary_sensor.is_on: boton3
          then:
-           - light.turn_off: central
-           - light.turn_off: izquierda
-           - light.turn_off: derecha
+           - script.execute: apagar_todo
   - platform: analog_threshold
     sensor_id: fsr1
     threshold:
@@ -365,4 +371,3 @@ binary_sensor:
 text_sensor:
   - platform: version
     name: "ESPHome Version"
-

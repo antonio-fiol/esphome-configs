@@ -1,0 +1,177 @@
+substitutions:
+  min_power: "1.2%"
+  max_power: "50%"
+  gamma: "2.8"
+
+esphome:
+  name: distribuidor
+  includes:
+    - dim.h
+  on_boot:
+    - lambda: |-
+        for(auto light : { id(central), id(izquierda), id(derecha), id(extra) }) {
+          auto call = light->make_call();
+          call.set_brightness(0.3);
+          call.set_state(false);
+          call.perform();
+        }
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+    version: recommended
+
+time:
+  platform: sntp
+
+# Enable logging
+logger:
+  level: VERBOSE
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Distribuidor Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+web_server:
+
+output:
+  - platform: ledc
+    pin: GPIO15
+    id: out1
+    frequency: 1220Hz
+    min_power: $min_power
+    max_power: $max_power
+    zero_means_zero: true
+  - platform: ledc
+    pin: GPIO16
+    id: out2
+    frequency: 1220Hz
+    min_power: $min_power
+    max_power: $max_power
+    zero_means_zero: true
+  - platform: ledc
+    pin: GPIO22
+    id: out3
+    frequency: 1220Hz
+    min_power: $min_power
+    max_power: $max_power
+    zero_means_zero: true
+  - platform: ledc
+    pin: GPIO23
+    id: out4
+    frequency: 1220Hz
+    min_power: $min_power
+    max_power: $max_power
+    zero_means_zero: true
+light:
+  - platform: monochromatic
+    output: out2
+    name: Central
+    id: central
+    default_transition_length: 0.25s
+    on_turn_on: &runscript
+      - script.execute: check_en
+    on_turn_off: *runscript
+    restore_mode: ALWAYS_OFF
+    gamma_correct: $gamma
+  - platform: monochromatic
+    output: out3
+    name: Derecha
+    id: derecha
+    default_transition_length: 0.25s
+    on_turn_on: *runscript
+    on_turn_off: *runscript
+    restore_mode: ALWAYS_OFF
+    gamma_correct: $gamma
+  - platform: monochromatic
+    output: out1
+    name: Izquierda
+    id: izquierda
+    default_transition_length: 0.25s
+    on_turn_on: *runscript
+    on_turn_off: *runscript
+    restore_mode: ALWAYS_OFF
+    gamma_correct: $gamma
+  - platform: monochromatic
+    output: out4
+    name: Extra
+    id: extra
+    default_transition_length: 0.25s
+    on_turn_on: *runscript
+    on_turn_off: *runscript
+    restore_mode: ALWAYS_OFF
+    gamma_correct: $gamma
+    
+script:
+  - id: check_en
+    then:
+      - logger.log: check_en
+      - lambda: |-
+          id(enable_out).publish_state(
+              id(izquierda).remote_values.is_on() || 
+              id(central  ).remote_values.is_on() || 
+              id(derecha  ).remote_values.is_on()
+          );
+
+switch:
+  - platform: gpio
+    pin: GPIO17
+    name: Activar Salidas
+    id: enable_out
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+sensor:
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 60s
+
+
+binary_sensor:
+    
+
+text_sensor:
+  - platform: version
+    name: "ESPHome Version"
+    
+number:
+  - platform: template
+    name: Frecuencia LEDC
+    id: freq
+    entity_category: config
+    max_value: 19531
+    min_value: 10
+    step: 1
+    initial_value: 1220
+    optimistic: True
+    restore_value: True
+    on_value:
+      then:
+        - output.ledc.set_frequency:
+            id: out1
+            frequency: !lambda return x;
+        - output.ledc.set_frequency:
+            id: out2
+            frequency: !lambda return x;
+        - output.ledc.set_frequency:
+            id: out3
+            frequency: !lambda return x;
+        - output.ledc.set_frequency:
+            id: out4
+            frequency: !lambda return x;
+

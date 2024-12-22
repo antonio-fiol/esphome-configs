@@ -27,6 +27,7 @@ api:
 
 # Enable over-the-air flashing
 ota:
+  platform: esphome
 
 # Use the blue LED in the device as a status LED, which will blink if there are warnings (slow) or errors (fast)
 status_led:
@@ -163,7 +164,7 @@ sensor:
       mode: INPUT_PULLUP
     id: wind_speed_raw
     internal: true
-    update_interval: 3s
+    update_interval: 4s
     unit_of_measurement: km/h
     filters:
 #      - multiply: 25  # pulso --> cm
@@ -175,7 +176,7 @@ sensor:
     icon: mdi:weather-windy
     unit_of_measurement: km/h
     lambda: "return id(wind_speed_raw).state;"
-    update_interval: 3s
+    update_interval: 4s
     filters:
       - sliding_window_moving_average:
           window_size: 20
@@ -186,7 +187,7 @@ sensor:
     icon: mdi:weather-windy
     unit_of_measurement: km/h
     lambda: "return id(wind_speed_raw).state;"
-    update_interval: 3s
+    update_interval: 4s
     filters:
       - max:
           window_size: 20

@@ -1,0 +1,259 @@
+esphome:
+  name: yellow
+  friendly_name: Yellow
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+
+ota:
+  platform: esphome
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+i2c:
+  sda: 33
+  scl: 32
+  scan: true
+  id: bus_a
+
+spi:
+  clk_pin: 14
+  mosi_pin: 13
+  miso_pin: 12
+
+light:
+  - platform: rgb
+    name: "Status Light"
+    red: red_GPIO
+    green: green_GPIO
+    blue: blue_GPIO
+  - platform: monochromatic
+    output: backlight_pin
+    name: "Display Backlight"
+    id: back_light
+    restore_mode: ALWAYS_ON
+
+output:
+  - platform: ledc
+    pin: 4
+    id: red_GPIO
+    inverted: True
+  - platform: ledc
+    pin: 16
+    id: green_GPIO
+    inverted: True
+  - platform: ledc
+    pin: 17
+    id: blue_GPIO
+    inverted: True
+  - platform: ledc
+    pin: 27
+    id: backlight_pin
+    
+sensor:
+  - platform: homeassistant
+    id: t1
+    entity_id: sensor.t_h_sensor_temperature
+    on_value:
+      - lvgl.label.update:
+          id: label1
+          text:
+            format: "%.1f ºC"
+            args: [ 'x' ]
+      - lvgl.indicator.update:
+          id: arc1
+          end_value: !lambda return x*10;
+  - platform: homeassistant
+    id: t2
+    entity_id: sensor.t_h_sensor_2_temperature
+    on_value:
+      - lvgl.label.update:
+          id: label2
+          text:
+            format: "%.1f ºC"
+            args: [ 'x' ]
+      - lvgl.indicator.update:
+          id: arc2
+          end_value: !lambda return x*10;
+  - platform: homeassistant
+    id: t3
+    entity_id: sensor.t_h_sensor_3_temperature
+    on_value:
+      - lvgl.label.update:
+          id: label3
+          text:
+            format: "%.1f ºC"
+            args: [ 'x' ]
+      - lvgl.indicator.update:
+          id: arc3
+          end_value: !lambda return x*10;
+  - platform: homeassistant
+    id: t4
+    entity_id: sensor.maria_guerrero_zone_1_circuit_0_current_temperature
+    on_value:
+      - lvgl.label.update:
+          id: label4
+          text:
+            format: "%.1f ºC"
+            args: [ 'x' ]
+      - lvgl.indicator.update:
+          id: arc4
+          end_value: !lambda return x*10;
+
+
+
+display:
+  - platform: ili9xxx
+    id: my_display
+    model: ST7796
+    dc_pin: 2
+    cs_pin: 15
+    dimensions: 320x480
+    update_interval: never
+    auto_clear_enabled: false
+    invert_colors: false
+
+touchscreen:
+  platform: gt911
+  id: my_touch
+  update_interval: 50ms
+#  interrupt_pin: 21 # maybe not connected?
+#  reset_pin: 25 # From a openhasp config, appears to be the 'normal' esp32 reset pin?
+
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+
+# font:
+#   - file: "gfonts://Martian+Mono"
+#     id: large
+#     size: 40
+#   - file: "gfonts://Martian+Mono"
+#     id: small
+#     size: 20
+font:
+  - file: "fonts/Roboto-Regular.ttf"
+    id: roboto14
+    size: 14
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+lvgl:
+  theme:
+    label:
+      text_font: roboto14
+  touchscreens:
+    - my_touch
+  buffer_size: 25%
+  pages:
+    - id: main_page
+      widgets:
+        - obj:
+            height: 310
+            width: 310
+            align: CENTER
+            border_width: 1
+            pad_all: 4
+            widgets:
+              - meter:
+                  align: CENTER
+                  width: 300
+                  height: 300
+                  scales:
+                    - range_from: 18
+                      range_to: 30
+                      angle_range: 270
+                      rotation: 90
+                      ticks:
+                        count: 13
+                        width: 1
+                        length: 60
+                        color: grey
+                        major:
+                          stride: 2
+                          width: 1
+                          length: 60
+                          label_gap: 10
+                    - range_from: 180
+                      range_to: 300
+                      angle_range: 270
+                      rotation: 90
+                      ticks:
+                        count: 0
+                      indicators:
+                        - arc:
+                            id: arc1
+                            end_value: 20
+                            color: green
+                            width: 12
+                        - arc:
+                            id: arc2
+                            end_value: 21
+                            r_mod: -15
+                            color: blue
+                            width: 12
+                        - arc:
+                            id: arc3
+                            end_value: 22
+                            r_mod: -30
+                            color: red
+                            width: 12
+                        - arc:
+                            id: arc4
+                            end_value: 22
+                            r_mod: -45
+                            color: purple
+                            width: 12
+              - obj:
+                  align: BOTTOM_RIGHT
+                  width: 50%
+                  height: 64
+                  pad_all: 0
+                  border_width: 0
+                  bg_opa: TRANSP
+                  radius: 0
+                  y: -12
+                  widgets:
+                    - label:
+                        id: label4
+                        align: TOP_LEFT
+                        text_align: LEFT
+                        x: 10
+                        y: 0
+                        text: '--.- ºC'
+                    - label:
+                        id: label3
+                        align: TOP_LEFT
+                        text_align: LEFT
+                        x: 10
+                        y: 15
+                        text: '--.- ºC'
+                    - label:
+                        id: label2
+                        align: TOP_LEFT
+                        text_align: LEFT
+                        x: 10
+                        y: 30
+                        text: '--.- ºC'
+                    - label:
+                        id: label1
+                        align: TOP_LEFT
+                        text_align: LEFT
+                        x: 10
+                        y: 45
+                        text: '--.- ºC'
+

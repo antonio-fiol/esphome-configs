@@ -40,6 +40,7 @@ api:
 
 # Enable over-the-air flashing
 ota:
+  platform: esphome
 
 # Use the blue LED in the device as a status LED, which will blink if there are warnings (slow) or errors (fast)
 status_led:
@@ -91,6 +92,7 @@ binary_sensor:
      name: pin2
      filters:
        - delayed_off: 200ms
+   # Interruptor Garaje
    - platform: gpio
      pin:
        mcp23xxx: mcp
@@ -102,7 +104,13 @@ binary_sensor:
      name: pin3
      filters:
        - delayed_off: 200ms
-   # Interruptor Garaje
+     on_state:
+         - if:
+             condition:
+               - switch.is_on: ctl_luz
+             then:
+               - switch.toggle: pin11
+   # Averiado - antiguo Interruptor Garaje
    - platform: gpio
      pin:
        mcp23xxx: mcp
@@ -114,8 +122,6 @@ binary_sensor:
      name: pin4
      filters:
        - delayed_off: 200ms
-     on_state:
-       - switch.toggle: pin11
    # Interruptor Entrada 1
    - platform: gpio
      pin:
@@ -133,11 +139,15 @@ binary_sensor:
          - logger.log: "Cambio en entrada 1"
          - if:
              condition:
-               - switch.is_off: pin10
+               - switch.is_on: ctl_fuente
              then:
-               - button.press: programa1
-             else:
-               - switch.turn_off: pin10
+                - if:
+                    condition:
+                      - switch.is_off: pin10
+                    then:
+                      - button.press: programa1
+                    else:
+                      - switch.turn_off: pin10
    # Interruptor Entrada 2
    - platform: gpio
      pin:
@@ -155,11 +165,15 @@ binary_sensor:
          - logger.log: "Cambio en entrada 2"
          - if:
              condition:
-               - switch.is_off: pin10
+               - switch.is_on: ctl_fuente
              then:
-               - button.press: programa2
-             else:
-               - switch.turn_off: pin10
+                - if:
+                    condition:
+                      - switch.is_off: pin10
+                    then:
+                      - button.press: programa2
+                    else:
+                      - switch.turn_off: pin10
 # pin 7 not connected
 
    - platform: template
@@ -268,6 +282,18 @@ switch:
    - platform: template
      name: Apagado auto luz garaje
      id: auto_off_luz
+     entity_category: config
+     optimistic: True
+     restore_mode: RESTORE_DEFAULT_ON
+   - platform: template
+     name: Control luz con interruptor
+     id: ctl_luz
+     entity_category: config
+     optimistic: True
+     restore_mode: RESTORE_DEFAULT_ON
+   - platform: template
+     name: Control fuente con interruptor
+     id: ctl_fuente
      entity_category: config
      optimistic: True
      restore_mode: RESTORE_DEFAULT_ON

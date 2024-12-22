@@ -1,0 +1,61 @@
+esphome:
+  name: esp32-relay-x4
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  - platform: esphome
+    password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esp32-Relay-X4 Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+
+output:
+  - platform: gpio
+    pin: GPIO23
+    id: led
+
+# Define the switches based on the relay pins
+switch:
+  - platform: gpio
+    id: relay_1
+    name: "Relay 1"
+    pin: GPIO32
+  - platform: gpio
+    id: relay_2
+    name: "Relay 2"
+    pin: GPIO33
+  - platform: gpio
+    id: relay_3
+    name: "Relay 3"
+    pin: GPIO25
+  - platform: gpio
+    id: relay_4
+    name: "Relay 4"
+    pin: GPIO26
+
+interval:
+  - interval: 1000ms
+    then:
+      - output.turn_on: led
+      - delay: 500ms
+      - output.turn_off: led

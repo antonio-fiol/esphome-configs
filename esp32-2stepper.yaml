@@ -1,0 +1,102 @@
+esphome:
+  name: esp32-2stepper
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+  level: INFO
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  - platform: esphome
+    password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esp32-2Stepper Fallback Hotspot"
+    password: !secret fallback_pass
+
+captive_portal:
+
+web_server:
+
+
+stepper:
+  - platform: uln2003
+    id: my_stepper1
+    pin_a: GPIO22
+    pin_b: GPIO15
+    #enable_ab: GPIO13
+    pin_c: GPIO12
+    pin_d: GPIO4
+    #enable_cd: GPIO14
+    max_speed: 250 steps/s
+
+    # Optional:
+    acceleration: 12 steps/s^2
+    deceleration: 12 steps/s^2
+    sleep_when_done: true
+
+  - platform: uln2003
+    id: my_stepper2
+    pin_a: GPIO27
+    pin_b: GPIO17
+    #enable_ab: GPIO26
+    pin_c: GPIO25
+    pin_d: GPIO19
+    #enable_cd: GPIO23
+    max_speed: 250 steps/s
+
+    # Optional:
+    acceleration: 12 steps/s^2
+    deceleration: 12 steps/s^2
+    sleep_when_done: true
+
+switch:
+  - platform: gpio
+    pin: GPIO13
+    restore_mode: ALWAYS_ON
+    name: Enable 1 AB
+  - platform: gpio
+    pin: GPIO14
+    restore_mode: ALWAYS_ON
+    name: Enable 1 CD
+  - platform: gpio
+    pin: GPIO26
+    restore_mode: ALWAYS_ON
+    name: Enable 2 AB
+  - platform: gpio
+    pin: GPIO23
+    restore_mode: ALWAYS_ON
+    name: Enable 2 CD
+
+interval:
+  - interval: 40000ms
+    then:
+      - stepper.set_target:
+          id: my_stepper1
+          target: 100
+      - delay: 15s
+      - stepper.set_target:
+          id: my_stepper1
+          target: 0
+      - delay: 5s
+      - stepper.set_target:
+          id: my_stepper2
+          target: 100
+      - delay: 15s
+      - stepper.set_target:
+          id: my_stepper2
+          target: 0
+

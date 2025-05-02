@@ -8,7 +8,7 @@ esp32:
 
 # Enable logging
 logger:
-  level: INFO
+  level: DEBUG
 
 # Enable Home Assistant API
 api:
@@ -31,72 +31,204 @@ captive_portal:
 
 web_server:
 
+i2c:
+  scl: GPIO32
+  sda: GPIO33
+  #scan: true
 
-stepper:
-  - platform: uln2003
-    id: my_stepper1
-    pin_a: GPIO22
-    pin_b: GPIO15
-    #enable_ab: GPIO13
-    pin_c: GPIO12
-    pin_d: GPIO4
-    #enable_cd: GPIO14
-    max_speed: 250 steps/s
 
-    # Optional:
-    acceleration: 12 steps/s^2
-    deceleration: 12 steps/s^2
-    sleep_when_done: true
+ads1115:
+  - address: 0x49
+sensor:
+  - platform: ads1115
+    multiplexer: 'A0_GND'
+    gain: 6.144
+    name: "ADS1115 Channel A0-GND"
+    update_interval: 5s
 
-  - platform: uln2003
-    id: my_stepper2
-    pin_a: GPIO27
-    pin_b: GPIO17
-    #enable_ab: GPIO26
-    pin_c: GPIO25
-    pin_d: GPIO19
-    #enable_cd: GPIO23
-    max_speed: 250 steps/s
 
-    # Optional:
-    acceleration: 12 steps/s^2
-    deceleration: 12 steps/s^2
-    sleep_when_done: true
+#stepper:
+#  - platform: uln2003
+#    id: my_stepper1
+#    pin_a: GPIO17
+#    pin_b: GPIO16
+#    #enable_ab: GPIO5
+#    pin_c: GPIO19
+#    pin_d: GPIO2
+#    #enable_cd: GPIO21
+#    max_speed: 5 steps/s
+
+#    # Optional:
+#    acceleration: 12 steps/s^2
+#    deceleration: 12 steps/s^2
+#    sleep_when_done: true
+
+#  - platform: uln2003
+#    id: my_stepper2
+#    pin_a: GPIO22
+#    pin_b: GPIO12
+#    #enable_ab: GPIO13
+#    pin_c: GPIO15
+#    pin_d: GPIO4
+#    #enable_cd: GPIO14
+#    max_speed: 300 steps/s
+
+#    # Optional:
+#    acceleration: 200 steps/s^2
+#    deceleration: 300 steps/s^2
+#    sleep_when_done: true
+
+#  - platform: uln2003
+#    id: my_stepper3
+#    pin_a: GPIO27
+#    pin_b: GPIO0
+#    #enable_ab: GPIO26
+#    pin_c: GPIO25
+#    pin_d: GPIO18
+#    #enable_cd: GPIO23
+#    max_speed: 5 steps/s
+
+#    # Optional:
+#    acceleration: 12 steps/s^2
+#    deceleration: 12 steps/s^2
+#    sleep_when_done: true
+
 
 switch:
   - platform: gpio
+    pin: GPIO5
+    restore_mode: ALWAYS_ON
+    name: Enable 1
+
+  - platform: gpio
     pin: GPIO13
-    restore_mode: ALWAYS_ON
-    name: Enable 1 AB
-  - platform: gpio
-    pin: GPIO14
-    restore_mode: ALWAYS_ON
-    name: Enable 1 CD
-  - platform: gpio
-    pin: GPIO26
     restore_mode: ALWAYS_ON
     name: Enable 2 AB
   - platform: gpio
-    pin: GPIO23
+    pin: GPIO14
     restore_mode: ALWAYS_ON
     name: Enable 2 CD
 
+  - platform: gpio
+    pin: GPIO26
+    restore_mode: ALWAYS_ON
+    name: Enable 3 AB
+  - platform: gpio
+    pin: GPIO23
+    restore_mode: ALWAYS_ON
+    name: Enable 3 CD
+
+  - platform: gpio
+    pin:  GPIO17
+    name: A1-GPIO17
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO16
+    name: A2-GPIO16
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO19
+    name: A3-GPIO19
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO2
+    name: A4-GPIO2
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin:  GPIO22
+    name: B1-GPIO22-M2A
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO12
+    name: B2-GPIO12-M1A
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO15
+    name: B3-GPIO15-M2B	
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO4
+    name: B4-GPIO4-M1B
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO27
+    name: C1-GPIO27-M1A
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO0
+    name: C2-GPIO0-M1B
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO25
+    name: C3-GPIO25
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin:  GPIO18
+    name: C4-GPIO18
+    restore_mode: ALWAYS_OFF
+
+number:
+  - platform: template
+    name: "Speed"
+    id: speed
+    optimistic: true
+    min_value: 0
+    max_value: 2000
+    step: 10
+    initial_value: 300
+#    on_value:
+#      then:
+#        - stepper.set_speed:
+#            id: my_stepper2
+#            speed: !lambda "return x;"
+  - platform: template
+    name: "Gotas"
+    id: gotas
+    optimistic: true
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 2
+
 interval:
-  - interval: 40000ms
+  - interval: 60000ms
     then:
-      - stepper.set_target:
-          id: my_stepper1
-          target: 100
-      - delay: 15s
-      - stepper.set_target:
-          id: my_stepper1
-          target: 0
-      - delay: 5s
-      - stepper.set_target:
-          id: my_stepper2
-          target: 100
-      - delay: 15s
-      - stepper.set_target:
-          id: my_stepper2
-          target: 0
+#      - logger.log: Stepper 1 --> 100
+#      - stepper.set_target:
+#          id: my_stepper1
+#          target: 200
+
+#      - delay: 5s
+#      - logger.log: Stepper 2
+#      - stepper.report_position:
+#          id: my_stepper2
+#          position: 0
+#      - stepper.set_target:
+#          id: my_stepper2
+#          target: 0
+#      - delay: 1s
+#      - stepper.set_target:
+#          id: my_stepper2
+#          target: !lambda "return id(gotas).state * 3500L;"
+
+#      - delay: 4s
+#      - logger.log: Stepper 3 --> 100
+#      - stepper.set_target:
+#          id: my_stepper3
+#          target: 200
+#      - logger.log: Stepper 1 --> 0
+#      - stepper.set_target:
+#          id: my_stepper1
+#          target: 0
+#      - delay: 4s
+#      - logger.log: Stepper 2 --> 0
+#      - stepper.set_target:
+#          id: my_stepper2
+#          target: 0
+#      - delay: 30s
+#      - logger.log: Stepper 3 --> 0
+#      - stepper.set_target:
+#          id: my_stepper3
+#          target: 0
 

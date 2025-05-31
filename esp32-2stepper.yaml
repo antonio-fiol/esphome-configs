@@ -43,8 +43,26 @@ sensor:
   - platform: ads1115
     multiplexer: 'A0_GND'
     gain: 6.144
-    name: "ADS1115 Channel A0-GND"
+    name: "Medida Planta Centro"
+    id: m_centro
     update_interval: 5s
+  - platform: ads1115
+    multiplexer: 'A1_GND'
+    gain: 6.144
+    name: "Medida Planta Arriba"
+    id: m_arriba
+    update_interval: 5s
+  - platform: ads1115
+    multiplexer: 'A2_GND'
+    gain: 6.144
+    name: "Medida Planta Abajo"
+    id: m_abajo
+    update_interval: 5s
+#  - platform: ads1115
+#    multiplexer: 'A3_GND'
+#    gain: 6.144
+#    name: "Medida A3"
+#    update_interval: 5s
 
 
 #stepper:
@@ -153,11 +171,11 @@ switch:
     restore_mode: ALWAYS_OFF
   - platform: gpio
     pin:  GPIO27
-    name: C1-GPIO27-M1A
+    name: C1-GPIO27-M3A
     restore_mode: ALWAYS_OFF
   - platform: gpio
     pin:  GPIO0
-    name: C2-GPIO0-M1B
+    name: C2-GPIO0-M3B
     restore_mode: ALWAYS_OFF
   - platform: gpio
     pin:  GPIO25
@@ -194,41 +212,4 @@ number:
 interval:
   - interval: 60000ms
     then:
-#      - logger.log: Stepper 1 --> 100
-#      - stepper.set_target:
-#          id: my_stepper1
-#          target: 200
-
-#      - delay: 5s
-#      - logger.log: Stepper 2
-#      - stepper.report_position:
-#          id: my_stepper2
-#          position: 0
-#      - stepper.set_target:
-#          id: my_stepper2
-#          target: 0
-#      - delay: 1s
-#      - stepper.set_target:
-#          id: my_stepper2
-#          target: !lambda "return id(gotas).state * 3500L;"
-
-#      - delay: 4s
-#      - logger.log: Stepper 3 --> 100
-#      - stepper.set_target:
-#          id: my_stepper3
-#          target: 200
-#      - logger.log: Stepper 1 --> 0
-#      - stepper.set_target:
-#          id: my_stepper1
-#          target: 0
-#      - delay: 4s
-#      - logger.log: Stepper 2 --> 0
-#      - stepper.set_target:
-#          id: my_stepper2
-#          target: 0
-#      - delay: 30s
-#      - logger.log: Stepper 3 --> 0
-#      - stepper.set_target:
-#          id: my_stepper3
-#          target: 0
-
+      - delay: 1s

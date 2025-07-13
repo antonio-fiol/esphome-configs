@@ -142,6 +142,7 @@ binary_sensor:
       - cover.stop: cover2
     filters:
       - delayed_on: 3s
+
   - platform: gpio
     id: boton1
     pin:
@@ -150,6 +151,11 @@ binary_sensor:
       mode:
         input: true
         pullup: true
+  - platform: template
+    id: boton1_virtual
+    lambda: "return id(boton1).state && !id(boton2).state;"
+    filters:
+      - delayed_on: 50ms
     on_press:
       - if:
           condition:
@@ -168,6 +174,11 @@ binary_sensor:
       mode:
         input: true
         pullup: true
+  - platform: template
+    id: boton2_virtual
+    lambda: "return id(boton2).state && !id(boton1).state;"
+    filters:
+      - delayed_on: 50ms
     on_press:
       - if:
           condition:
@@ -195,6 +206,11 @@ binary_sensor:
       mode:
         input: true
         pullup: true
+  - platform: template
+    id: boton3_virtual
+    lambda: "return id(boton3).state && !id(boton4).state;"
+    filters:
+      - delayed_on: 50ms
     on_press:
       - if:
           condition:
@@ -213,6 +229,11 @@ binary_sensor:
       mode:
         input: true
         pullup: true
+  - platform: template
+    id: boton4_virtual
+    lambda: "return id(boton4).state && !id(boton3).state;"
+    filters:
+      - delayed_on: 50ms
     on_press:
       - if:
           condition:
@@ -232,6 +253,24 @@ binary_sensor:
                   call.set_position(0);
                 }
                 call.perform();
+
+  - platform: template
+    id: boton12_virtual
+    lambda: "return id(boton1).state && id(boton2).state;"
+    filters:
+      - delayed_on: 50ms
+    on_press: 
+      then:
+        - button.press: action12
+  - platform: template
+    id: boton34_virtual
+    lambda: "return id(boton3).state && id(boton4).state;"
+    filters:
+      - delayed_on: 50ms
+    on_press: 
+      then:
+        - button.press: action34
+
 button:
   - platform: template
     name: Salon Izquierda Auto
@@ -251,6 +290,7 @@ button:
             call.perform();
   - platform: template
     name: Salon Izquierda Media
+    id: action12
     on_press: 
       then:
         - lambda: |-
@@ -259,6 +299,7 @@ button:
             call.perform();
   - platform: template
     name: Salon Derecha Media
+    id: action34
     on_press: 
       then:
         - lambda: |-

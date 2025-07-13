@@ -249,6 +249,22 @@ button:
             auto call = id(cover2).make_call();
             call.set_position(id(alt2).state/100.0);
             call.perform();
+  - platform: template
+    name: Salon Izquierda Media
+    on_press: 
+      then:
+        - lambda: |-
+            auto call = id(cover1).make_call();
+            call.set_position(id(med1).state/100.0);
+            call.perform();
+  - platform: template
+    name: Salon Derecha Media
+    on_press: 
+      then:
+        - lambda: |-
+            auto call = id(cover2).make_call();
+            call.set_position(id(med2).state/100.0);
+            call.perform();
 number:
   - platform: template
     name: Altura Izquierda Auto
@@ -268,6 +284,26 @@ number:
     min_value: 0
     step: 1
     initial_value: 10
+    optimistic: True
+    restore_value: True
+  - platform: template
+    name: Altura Izquierda Media
+    id: med1
+    entity_category: config
+    max_value: 100
+    min_value: 0
+    step: 1
+    initial_value: 60
+    optimistic: True
+    restore_value: True
+  - platform: template
+    name: Altura Derecha Media
+    id: med2
+    entity_category: config
+    max_value: 100
+    min_value: 0
+    step: 1
+    initial_value: 60
     optimistic: True
     restore_value: True
 

@@ -172,6 +172,9 @@ sensor:
 #      - multiply: 25  # pulso --> cm
 #      - multiply: 0.0006 # cm/min --> km/h
       - multiply: 0.081 # pulsos/min --> km/h experimental
+      - median: 
+          window_size: 3
+          send_every: 1
   - platform: template
     id: wind_speed
     name: "Velocidad del viento"

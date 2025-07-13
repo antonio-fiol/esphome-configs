@@ -47,6 +47,9 @@ climate:
     max_temperature: 31
     min_temperature: 16
     name: "A/A Buhardilla"
+    visual: 
+      max_temperature: 31
+      min_temperature: 16
 
     
     

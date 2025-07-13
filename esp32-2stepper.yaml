@@ -41,75 +41,67 @@ ads1115:
   - address: 0x49
 sensor:
   - platform: ads1115
-    multiplexer: 'A0_GND'
-    gain: 6.144
-    name: "Medida Planta Centro"
-    id: m_centro
-    update_interval: 5s
-  - platform: ads1115
     multiplexer: 'A1_GND'
     gain: 6.144
-    name: "Medida Planta Arriba"
-    id: m_arriba
+    name: "Medida Planta Centro"
+    id: m2
     update_interval: 5s
+    filters:
+      - median:
+          window_size: 5
+          send_every: 5
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 2
+  - platform: ads1115
+    multiplexer: 'A0_GND'
+    gain: 6.144
+    name: "Medida Planta Arriba"
+    id: m1
+    update_interval: 5s
+    filters:
+      - median:
+          window_size: 5
+          send_every: 5
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 2
   - platform: ads1115
     multiplexer: 'A2_GND'
     gain: 6.144
     name: "Medida Planta Abajo"
-    id: m_abajo
+    id: m3
     update_interval: 5s
+    filters:
+      - median:
+          window_size: 5
+          send_every: 5
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 2
 #  - platform: ads1115
 #    multiplexer: 'A3_GND'
 #    gain: 6.144
 #    name: "Medida A3"
 #    update_interval: 5s
-
-
-#stepper:
-#  - platform: uln2003
-#    id: my_stepper1
-#    pin_a: GPIO17
-#    pin_b: GPIO16
-#    #enable_ab: GPIO5
-#    pin_c: GPIO19
-#    pin_d: GPIO2
-#    #enable_cd: GPIO21
-#    max_speed: 5 steps/s
-
-#    # Optional:
-#    acceleration: 12 steps/s^2
-#    deceleration: 12 steps/s^2
-#    sleep_when_done: true
-
-#  - platform: uln2003
-#    id: my_stepper2
-#    pin_a: GPIO22
-#    pin_b: GPIO12
-#    #enable_ab: GPIO13
-#    pin_c: GPIO15
-#    pin_d: GPIO4
-#    #enable_cd: GPIO14
-#    max_speed: 300 steps/s
-
-#    # Optional:
-#    acceleration: 200 steps/s^2
-#    deceleration: 300 steps/s^2
-#    sleep_when_done: true
-
-#  - platform: uln2003
-#    id: my_stepper3
-#    pin_a: GPIO27
-#    pin_b: GPIO0
-#    #enable_ab: GPIO26
-#    pin_c: GPIO25
-#    pin_d: GPIO18
-#    #enable_cd: GPIO23
-#    max_speed: 5 steps/s
-
-#    # Optional:
-#    acceleration: 12 steps/s^2
-#    deceleration: 12 steps/s^2
-#    sleep_when_done: true
+  - platform: template
+    id: remaining_time1
+    name: Restante1
+    icon: mdi:timer
+    unit_of_measurement: s
+    accuracy_decimals: 0
+  - platform: template
+    id: remaining_time2
+    name: Restante2
+    icon: mdi:timer
+    unit_of_measurement: s
+    accuracy_decimals: 0
+  - platform: template
+    id: remaining_time3
+    name: Restante3
+    icon: mdi:timer
+    unit_of_measurement: s
+    accuracy_decimals: 0
 
 
 switch:
@@ -156,10 +148,12 @@ switch:
   - platform: gpio
     pin:  GPIO22
     name: B1-GPIO22-M2A
+    id: relay2
     restore_mode: ALWAYS_OFF
   - platform: gpio
     pin:  GPIO12
     name: B2-GPIO12-M1A
+    id: relay1
     restore_mode: ALWAYS_OFF
   - platform: gpio
     pin:  GPIO15
@@ -172,6 +166,7 @@ switch:
   - platform: gpio
     pin:  GPIO27
     name: C1-GPIO27-M3A
+    id: relay3
     restore_mode: ALWAYS_OFF
   - platform: gpio
     pin:  GPIO0
@@ -186,30 +181,211 @@ switch:
     name: C4-GPIO18
     restore_mode: ALWAYS_OFF
 
+
 number:
   - platform: template
-    name: "Speed"
-    id: speed
-    optimistic: true
-    min_value: 0
-    max_value: 2000
-    step: 10
-    initial_value: 300
-#    on_value:
-#      then:
-#        - stepper.set_speed:
-#            id: my_stepper2
-#            speed: !lambda "return x;"
-  - platform: template
-    name: "Gotas"
-    id: gotas
-    optimistic: true
+    id: ui_zone_duration1
+    name: Tiempo1
     min_value: 1
-    max_value: 10
+    max_value: 50
     step: 1
-    initial_value: 2
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: s
+    mode: slider
+  - platform: template
+    id: ui_zone_duration2
+    name: Tiempo2
+    min_value: 1
+    max_value: 50
+    step: 1
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: s
+    mode: slider
+  - platform: template
+    id: ui_zone_duration3
+    name: Tiempo3
+    min_value: 1
+    max_value: 50
+    step: 1
+    initial_value: 30
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: s
+    mode: slider
+  - platform: template
+    id: thr1
+    name: Umbral1
+    min_value: 1
+    max_value: 3
+    step: 0.05
+    initial_value: 2.5
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: V
+    mode: slider
+  - platform: template
+    id: thr2
+    name: Umbral2
+    min_value: 1
+    max_value: 3
+    step: 0.05
+    initial_value: 2.5
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: V
+    mode: slider
+  - platform: template
+    id: thr3
+    name: Umbral3
+    min_value: 1
+    max_value: 3
+    step: 0.05
+    initial_value: 2.5
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: V
+    mode: slider
+    
+        
+binary_sensor:
+  - platform: template
+    lambda: return id(relay1).state;
+    id: relay1_toff
+    internal: true
+    filters:
+      delayed_on: 60s
+    on_press:
+      then:
+        switch.turn_off: relay1
+  - platform: template
+    lambda: return id(relay1).state;
+    id: relay1_start_timer
+    internal: true
+    on_press:
+       - sensor.template.publish:
+           id: remaining_time1
+           state: !lambda 'return id(ui_zone_duration1).state;'
+  - platform: template
+    lambda: return id(relay2).state;
+    id: relay2_toff
+    internal: true
+    filters:
+      delayed_on: 60s
+    on_press:
+      then:
+        switch.turn_off: relay2
+  - platform: template
+    lambda: return id(relay2).state;
+    id: relay2_start_timer
+    internal: true
+    on_press:
+       - sensor.template.publish:
+           id: remaining_time2
+           state: !lambda 'return id(ui_zone_duration2).state;'
+  - platform: template
+    lambda: return id(relay3).state;
+    id: relay3_toff
+    internal: true
+    filters:
+      delayed_on: 60s
+    on_press:
+      then:
+        switch.turn_off: relay3
+  - platform: template
+    lambda: return id(relay3).state;
+    id: relay3_start_timer
+    internal: true
+    on_press:
+       - sensor.template.publish:
+           id: remaining_time3
+           state: !lambda 'return id(ui_zone_duration3).state;'
+  - platform: analog_threshold
+    name: "M1 over"
+    id: m1over
+    sensor_id: m1
+    threshold:
+      lower: !lambda 'return id(thr1).state - 0.02;'
+      upper: !lambda 'return id(thr1).state + 0.02;'
+  - platform: analog_threshold
+    name: "M2 over"
+    id: m2over
+    sensor_id: m2
+    threshold:
+      lower: !lambda 'return id(thr2).state - 0.02;'
+      upper: !lambda 'return id(thr2).state + 0.02;'
+  - platform: analog_threshold
+    name: "M3 over"
+    id: m3over
+    sensor_id: m3
+    threshold:
+      lower: !lambda 'return id(thr3).state - 0.02;'
+      upper: !lambda 'return id(thr3).state + 0.02;'
 
+    
 interval:
-  - interval: 60000ms
+  - interval: 1s
     then:
-      - delay: 1s
+      - lambda: |-
+          if (id(remaining_time1).state > 0 && id(relay1).state) {
+              // Decrement the timer.
+              if (id(remaining_time1).state <= 1) {
+                id(relay1).turn_off();
+                id(remaining_time1).publish_state(0);
+              } else {
+                id(remaining_time1).publish_state(id(remaining_time1).state - 1);
+              }
+          }
+          if (id(remaining_time2).state > 0 && id(relay2).state) {
+              // Decrement the timer.
+              if (id(remaining_time2).state <= 1) {
+                id(relay2).turn_off();
+                id(remaining_time2).publish_state(0);
+              } else {
+                id(remaining_time2).publish_state(id(remaining_time2).state - 1);
+              }
+          }
+          if (id(remaining_time3).state > 0 && id(relay3).state) {
+              // Decrement the timer.
+              if (id(remaining_time3).state <= 1) {
+                id(relay3).turn_off();
+                id(remaining_time3).publish_state(0);
+              } else {
+                id(remaining_time3).publish_state(id(remaining_time3).state - 1);
+              }
+          }
+
+time:
+  - platform: sntp
+    on_time:
+      - seconds: 0
+        minutes: 1
+        hours: 10
+        then:
+          - if:
+              condition:
+                - binary_sensor.is_on: m1over
+              then:
+                - switch.turn_on: relay1
+      - seconds: 0
+        minutes: 2
+        hours: 10
+        then:
+          - if:
+              condition:
+                - binary_sensor.is_on: m2over
+              then:
+                - switch.turn_on: relay2
+      - seconds: 0
+        minutes: 3
+        hours: 10
+        then:
+          - if:
+              condition:
+                - binary_sensor.is_on: m3over
+              then:
+                - switch.turn_on: relay3
+

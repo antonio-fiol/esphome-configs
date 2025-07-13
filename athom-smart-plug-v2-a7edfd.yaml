@@ -4,6 +4,9 @@ substitutions:
 
 packages:
   athom.smart-plug-v2: github://athom-tech/athom-configs/athom-smart-plug-v2.yaml
+
+web_server: !remove
+
 esphome:
   name: ${name}
   name_add_mac_suffix: false

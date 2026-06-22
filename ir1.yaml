@@ -10,7 +10,6 @@ logger:
 
 # Enable Home Assistant API
 api:
-  password: ""
 
 ota:
   platform: esphome
@@ -46,13 +45,12 @@ climate:
     vertical_default: down
     max_temperature: 31
     min_temperature: 16
-    name: "A/A Buhardilla"
-    visual: 
+    name: A/A Buhardilla
+    visual:
       max_temperature: 31
       min_temperature: 16
-
-    
-    
+    supports_heat: false
+    sensor: current_temperature
 
 switch:
   - platform: template
@@ -70,3 +68,10 @@ switch:
                 -1271, 430, -1272, 455, -411, 427
                 ]
 
+sensor:
+  - platform: homeassistant
+    name: Current temperature
+    entity_id: sensor.t_h_sensor_temperature
+    id: current_temperature
+    internal: true
+    unit_of_measurement: °C

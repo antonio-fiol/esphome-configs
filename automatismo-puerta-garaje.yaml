@@ -1,3 +1,6 @@
+substitutions:
+  name: puerta-garaje
+  
 esphome:
   name: automatismo-puerta-garaje
   friendly_name: automatismo-puerta-garaje
@@ -115,3 +118,35 @@ light:
   - platform: monochromatic
     output: laser2
     name: "Laser 2"
+
+#esp32_ble_tracker:
+#  scan_parameters: 
+#    active: False
+#  on_ble_advertise:
+#    - then:
+#        - lambda: |-
+#            std::string current_mac = x.address_str();
+#            // 1. Define your list of MAC addresses to ignore
+#            std::vector<std::string> ignored_macs = {
+#                "48:E7:29:17:1F:66", // V2C Trydan Charger
+#                "CB:35:33:33:4D:81", // Govee
+#                "38:01:95:E5:CF:65", // TV
+#                "40:F8:DF:DC:B0:DB", // EOSR10
+#                // "11:22:33:44:55:66", // Add as many as you need
+#            };
+#            // 2. Check if the current device is in the ignore list
+#            for (const auto& mac : ignored_macs) {
+#                if (current_mac == mac) {
+#                    return; // Exit the lambda early, dropping the log completely
+#                }
+#            }
+#            ESP_LOGD("ble_adv", "New BLE device - address: %s  name: \"%s\"", x.address_str().c_str(), x.get_name().c_str());
+#            for (auto uuid : x.get_service_uuids()) {
+#                ESP_LOGD("ble_adv", "  - Service UUID %s", uuid.to_string().c_str());
+#            }
+#            for (auto data : x.get_service_datas()) {
+#                ESP_LOGD("ble_adv", "  - Service data %s: (length %i)", data.uuid.to_string().c_str(), data.data.size());
+#            }
+#            for (auto data : x.get_manufacturer_datas()) {
+#                ESP_LOGD("ble_adv", "  - Manufacturer data %s: (length %i)", data.uuid.to_string().c_str(), data.data.size());
+#            }

@@ -17,9 +17,9 @@ esp32:
     type: arduino
     version: recommended
 
-external_components:
-  - source: github://pr#4256
-    components: [wireguard]
+#external_components:
+#  - source: github://pr#4256
+#    components: [wireguard]
 
 time:
   platform: sntp
@@ -29,7 +29,6 @@ logger:
 
 # Enable Home Assistant API
 api:
-  password: ""
 
 ota:
   platform: esphome

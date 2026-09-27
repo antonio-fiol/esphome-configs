@@ -59,6 +59,7 @@ mcp23017:
     address: 0x20
 
 binary_sensor:
+   # Interruptor Garaje
    - platform: gpio
      pin:
        mcp23xxx: mcp
@@ -70,6 +71,12 @@ binary_sensor:
      name: pin0
      filters:
        - delayed_off: 200ms
+     on_state:
+         - if:
+             condition:
+               - switch.is_on: ctl_luz
+             then:
+               - switch.toggle: pin11
    - platform: gpio
      pin:
        mcp23xxx: mcp
@@ -81,6 +88,7 @@ binary_sensor:
      name: pin1
      filters:
        - delayed_off: 200ms
+   # Programa 1
    - platform: gpio
      pin:
        mcp23xxx: mcp
@@ -90,48 +98,6 @@ binary_sensor:
          pullup: true
        inverted: true
      name: pin2
-     filters:
-       - delayed_off: 200ms
-   # Interruptor Garaje
-   - platform: gpio
-     pin:
-       mcp23xxx: mcp
-       number: 3
-       mode:
-         input: true
-         pullup: true
-       inverted: true
-     name: pin3
-     filters:
-       - delayed_off: 200ms
-     on_state:
-         - if:
-             condition:
-               - switch.is_on: ctl_luz
-             then:
-               - switch.toggle: pin11
-   # Averiado - antiguo Interruptor Garaje
-   - platform: gpio
-     pin:
-       mcp23xxx: mcp
-       number: 4
-       mode:
-         input: true
-         pullup: true
-       inverted: true
-     name: pin4
-     filters:
-       - delayed_off: 200ms
-   # Interruptor Entrada 1
-   - platform: gpio
-     pin:
-       mcp23xxx: mcp
-       number: 5
-       mode:
-         input: true
-         pullup: true
-       inverted: true
-     name: pin5
      filters:
        - delayed_off: 200ms
      on_state:
@@ -148,16 +114,16 @@ binary_sensor:
                       - button.press: programa1
                     else:
                       - switch.turn_off: pin10
-   # Interruptor Entrada 2
+   # Entrada 2
    - platform: gpio
      pin:
        mcp23xxx: mcp
-       number: 6
+       number: 3
        mode:
          input: true
          pullup: true
        inverted: true
-     name: pin6
+     name: pin3
      filters:
        - delayed_off: 200ms
      on_state:
@@ -174,6 +140,42 @@ binary_sensor:
                       - button.press: programa2
                     else:
                       - switch.turn_off: pin10
+   # Averiado - antiguo Interruptor Garaje
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 4
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin4
+     filters:
+       - delayed_off: 200ms
+   # Averiado Antiguo Interruptor Entrada 1
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 5
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin5
+     filters:
+       - delayed_off: 200ms
+   # Averiado - Antoguo Interruptor Entrada 2
+   - platform: gpio
+     pin:
+       mcp23xxx: mcp
+       number: 6
+       mode:
+         input: true
+         pullup: true
+       inverted: true
+     name: pin6
+     filters:
+       - delayed_off: 200ms
 # pin 7 not connected
 
    - platform: template

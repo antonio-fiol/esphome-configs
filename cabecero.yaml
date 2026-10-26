@@ -389,8 +389,3 @@ text_sensor:
     name: "ESPHome Version"
 
 espectre:
-
-select:
-  - platform: espectre
-    name: Espectre
-    id: select_espectre_1

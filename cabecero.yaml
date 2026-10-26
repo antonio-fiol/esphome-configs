@@ -237,11 +237,6 @@ sensor:
       - or:
         - delta: 0.3
         - heartbeat: 120s
-  - platform: espectre
-    movement:
-      name: Movement
-      id: espectre_movement
-
 binary_sensor:
   - platform: gpio
     name: "Boton 1"

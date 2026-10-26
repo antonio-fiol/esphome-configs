@@ -18,6 +18,8 @@ esp32:
 
 # Enable logging
 logger:
+  logs:
+    espectre.runtime: WARN
 
 # Enable Home Assistant API
 api:

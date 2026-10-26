@@ -26,7 +26,7 @@ api:
 
 ota:
   platform: esphome
-  password: ""
+  encryption:
 
 wifi:
   ssid: !secret wifi_ssid
@@ -114,7 +114,7 @@ button:
       then:
         - script.execute: apagar_todo
   - platform: espectre
-    name: ESPectre Wi-Fi Motion Detection
+    name: Recalibrate ESPectre Wi-Fi Motion Detection
     id: button_espectre_1
 
 interval:

@@ -113,6 +113,9 @@ button:
     on_press: 
       then:
         - script.execute: apagar_todo
+  - platform: espectre
+    name: ESPectre Wi-Fi Motion Detection
+    id: button_espectre_1
 
 interval:
   - interval: 1min
@@ -234,6 +237,10 @@ sensor:
       - or:
         - delta: 0.3
         - heartbeat: 120s
+  - platform: espectre
+    movement:
+      name: Movement
+      id: espectre_movement
 
 binary_sensor:
   - platform: gpio
@@ -368,8 +375,22 @@ binary_sensor:
           then:
             - lambda: |-
                 if(id(auto_up_down).state) dim(id(derecha), 0.1, 0.3);
+  - platform: espectre
+    calibrating:
+      name: Calibrating
+      id: espectre_calibrating
+    motion:
+      name: Motion
+      id: espectre_motion
     
 
 text_sensor:
   - platform: version
     name: "ESPHome Version"
+
+espectre:
+
+select:
+  - platform: espectre
+    name: Espectre
+    id: select_espectre_1

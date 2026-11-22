@@ -379,8 +379,8 @@ binary_sensor:
     motion:
       name: Motion
       id: espectre_motion
-    
-
+      filters:
+        - delayed_off: 3s
 text_sensor:
   - platform: version
     name: "ESPHome Version"
